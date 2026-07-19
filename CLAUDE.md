@@ -23,6 +23,15 @@ npm run lint       # oxlint
 Node is installed via nvm — in non-login shells run
 `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh"` first.
 
+## Project skills (.claude/skills/)
+
+- `/ship-milestone` — branch → core-first build → gates → browser-verify → PR.
+  Use for any feature work.
+- `/add-exercise` — adding drill types to the exercise registry (the M5+ path).
+- `/change-storage` — REQUIRED reading before touching persisted data or
+  src/shell/storage; covers schema migrations and backup compatibility.
+- `/verify` — per-surface verification checklist + what only Brian can test.
+
 ## Conventions
 
 - Domain logic goes in `src/core/` as pure functions with Vitest tests *before*
