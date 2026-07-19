@@ -1,7 +1,7 @@
 // Ported from the v0-vanilla browser test runner (tests/theory.test.js).
 
 import { describe, expect, test } from 'vitest'
-import { midiToName, midiToFreq } from './notes'
+import { midiToName, midiToFreq, pitchClassMidi } from './notes'
 import { INTERVALS } from './intervals'
 import { CHORDS } from './chords'
 import { SCALES } from './scales'
@@ -31,6 +31,21 @@ describe('midiToFreq', () => {
 
   test('respects a custom A4 reference', () => {
     expect(midiToFreq(69, 442)).toBeCloseTo(442, 3)
+  })
+})
+
+describe('pitchClassMidi', () => {
+  test('C4 is MIDI 60', () => {
+    expect(pitchClassMidi(0, 4)).toBe(60)
+  })
+
+  test('A4 is MIDI 69 and round-trips through midiToName', () => {
+    expect(pitchClassMidi(9, 4)).toBe(69)
+    expect(midiToName(pitchClassMidi(9, 4))).toBe('A4')
+  })
+
+  test('B3 is MIDI 59 (octave boundary below middle C)', () => {
+    expect(pitchClassMidi(11, 3)).toBe(59)
   })
 })
 

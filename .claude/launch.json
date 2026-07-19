@@ -4,8 +4,12 @@
     {
       "name": "dev",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "export NVM_DIR=\"$HOME/.nvm\" && . \"$NVM_DIR/nvm.sh\" && npm run dev"],
-      "port": 5173
+      "runtimeArgs": [
+        "-c",
+        "export NVM_DIR=\"$HOME/.nvm\" && . \"$NVM_DIR/nvm.sh\" && npm run dev -- --port \"${PORT:-5173}\" --strictPort"
+      ],
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }

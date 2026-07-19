@@ -11,3 +11,8 @@ export function midiToName(midi: number): string {
 export function midiToFreq(midi: number, a4 = 440): number {
   return a4 * Math.pow(2, (midi - 69) / 12)
 }
+
+/** MIDI number for a pitch class (0 = C … 11 = B) in a given octave (C4 = 60). */
+export function pitchClassMidi(pc: number, octave: number): number {
+  return (octave + 1) * 12 + pc
+}
