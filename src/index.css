@@ -1,5 +1,4 @@
-/* Ported from the v0-vanilla style.css — same dark theme.
-   Drill-specific styles (choices, feedback) return with the DrillRunner in M1. */
+/* Ported from the v0-vanilla style.css — same dark theme. */
 
 :root {
   --bg: #12141c;
@@ -99,7 +98,137 @@ nav a[data-status='active'] {
 }
 
 .mode-card p {
-  margin: 0;
+  margin: 0 0 10px;
   color: var(--text-dim);
   font-size: 0.9rem;
+}
+
+.mode-stat {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.streak-label {
+  color: var(--text-dim);
+}
+
+.drill-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.drill-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.session-score {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.play-btn {
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  color: #0c0e14;
+  font-weight: 600;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.play-btn:hover {
+  filter: brightness(1.08);
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.choice-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 14px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.choice-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.choice-btn:disabled {
+  cursor: default;
+}
+
+.choice-btn.correct {
+  background: rgba(76, 175, 125, 0.18);
+  border-color: var(--good);
+  color: var(--good);
+}
+
+.choice-btn.incorrect {
+  background: rgba(229, 99, 107, 0.18);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.feedback {
+  min-height: 24px;
+  margin-top: 18px;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.feedback.correct {
+  color: var(--good);
+}
+
+.feedback.incorrect {
+  color: var(--bad);
+}
+
+.next-btn {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 10px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.next-btn:hover {
+  background: rgba(108, 140, 255, 0.1);
+}
+
+@media (max-width: 420px) {
+  .choices {
+    grid-template-columns: 1fr;
+  }
 }
