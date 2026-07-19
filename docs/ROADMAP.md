@@ -10,7 +10,7 @@ Status legend: ✅ done · 🚧 in progress · ⬜ planned
 | **M1** | ✅ | Parity — replaces the vanilla app | core/ + shell/ port, exercise contract + 3 multiple-choice drills, DrillRunner, IndexedDB store + v0 localStorage migration (streak preserved), PWA installable/offline, tests ported to Vitest; old files deleted (archived at tag `v0-vanilla`) |
 | **M2** | ✅ | Metronome | Pure rhythm timing math in core, lookahead scheduler in shell, tempo/time signatures/subdivisions, tap tempo, visual beat indicator |
 | **M3** | ✅ | Tuner | Pitch detection (MPM) in core + tests, mic adapter + permission UX, note + cents needle, A4 calibration (438–443) |
-| **M4** | ⬜ | Scale practice + dashboard | Date-seeded daily scale assignments, reference playback at tempo, proper note spelling (`keys.ts`), export/import JSON backup |
+| **M4** | ✅ | Scale practice + dashboard | Date-keyed daily scale rotation, reference playback at tempo, proper note spelling (`keys.ts`), practice card on home, export/import JSON backup |
 | **M5+** | ⬜ | Course-qualification features (rubric-gated) | See below |
 
 ## M5+ — waiting on official rubrics
