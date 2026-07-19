@@ -232,3 +232,116 @@ nav a[data-status='active'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Metronome */
+
+.metro-bpm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 12px;
+}
+
+.bpm-value {
+  text-align: center;
+  min-width: 110px;
+}
+
+.bpm-number {
+  display: block;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bpm-label {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+.bpm-nudge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.bpm-nudge:hover {
+  background: var(--surface-hover);
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 8px 0 20px;
+}
+
+.metro-row {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.metro-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  flex: 1;
+}
+
+.metro-row select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
+.tap-btn {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.tap-btn:active {
+  background: rgba(108, 140, 255, 0.2);
+}
+
+.beat-dots {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  min-height: 18px;
+}
+
+.beat-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  transition: transform 0.05s ease, background 0.05s ease;
+}
+
+.beat-dot.downbeat {
+  border-color: var(--accent);
+}
+
+.beat-dot.active {
+  background: var(--accent);
+  transform: scale(1.35);
+}
