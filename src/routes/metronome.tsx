@@ -1,15 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { MetronomeView } from '../features/metronome/MetronomeView'
 
 export const Route = createFileRoute('/metronome')({
-  component: MetronomePage,
+  component: MetronomeView,
 })
-
-// Placeholder — M2 adds the lookahead scheduler + click engine (docs/ROADMAP.md).
-function MetronomePage() {
-  return (
-    <section>
-      <h2>Metronome</h2>
-      <p className="tagline">Metronome coming in M2.</p>
-    </section>
-  )
-}

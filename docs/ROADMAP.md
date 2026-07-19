@@ -8,7 +8,7 @@ Status legend: ✅ done · 🚧 in progress · ⬜ planned
 |---|--------|-------|----------|
 | **M0** | ✅ | Deployed shell + docs | Vite+React+TS scaffold, TanStack Router, Docker, CI + GitHub Pages deploy, planning docs |
 | **M1** | ✅ | Parity — replaces the vanilla app | core/ + shell/ port, exercise contract + 3 multiple-choice drills, DrillRunner, IndexedDB store + v0 localStorage migration (streak preserved), PWA installable/offline, tests ported to Vitest; old files deleted (archived at tag `v0-vanilla`) |
-| **M2** | ⬜ | Metronome | Pure rhythm timing math in core, lookahead scheduler in shell, tempo/time signatures/subdivisions, visual beat indicator |
+| **M2** | ✅ | Metronome | Pure rhythm timing math in core, lookahead scheduler in shell, tempo/time signatures/subdivisions, tap tempo, visual beat indicator |
 | **M3** | ⬜ | Tuner | Pitch detection (autocorrelation/MPM) in core + tests, mic adapter + permission UX, note + cents display, A4 calibration (440/442) |
 | **M4** | ⬜ | Scale practice + dashboard | Date-seeded daily scale assignments, reference playback at tempo, proper note spelling (`keys.ts`), export/import JSON backup |
 | **M5+** | ⬜ | Course-qualification features (rubric-gated) | See below |
