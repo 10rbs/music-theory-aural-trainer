@@ -8,12 +8,25 @@ import {
   TIME_SIGNATURES,
 } from '../../core/rhythm/click-track'
 import { startClickTrack, type RunningClickTrack } from '../../shell/audio/scheduler'
+import { DropWidget } from '../../components/DropWidget'
+import { useStore } from '../stats/store-context'
 
-export function MetronomeView() {
-  const [bpm, setBpm] = useState(100)
-  const [sigIndex, setSigIndex] = useState(2) // 4/4
-  const [subIndex, setSubIndex] = useState(0)
+interface MetronomeSettings {
+  bpm: number
+  sigIndex: number
+  subIndex: number
+}
+
+const DEFAULTS: MetronomeSettings = { bpm: 100, sigIndex: 2 /* 4/4 */, subIndex: 0 }
+
+export function MetronomeWidget() {
+  const store = useStore()
+  const [bpm, setBpm] = useState(DEFAULTS.bpm)
+  const [sigIndex, setSigIndex] = useState(DEFAULTS.sigIndex)
+  const [subIndex, setSubIndex] = useState(DEFAULTS.subIndex)
+  const [loaded, setLoaded] = useState(false)
   const [running, setRunning] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [activeBeat, setActiveBeat] = useState(-1)
 
   const trackRef = useRef<RunningClickTrack | null>(null)
@@ -21,6 +34,20 @@ export function MetronomeView() {
 
   const signature = TIME_SIGNATURES[sigIndex]
   const subdivision = SUBDIVISIONS[subIndex]
+
+  useEffect(() => {
+    void store.getSetting<MetronomeSettings>('metronome', DEFAULTS).then((s) => {
+      setBpm(clampBpm(s.bpm))
+      setSigIndex(s.sigIndex < TIME_SIGNATURES.length ? s.sigIndex : DEFAULTS.sigIndex)
+      setSubIndex(s.subIndex < SUBDIVISIONS.length ? s.subIndex : DEFAULTS.subIndex)
+      setLoaded(true)
+    })
+    return () => trackRef.current?.stop()
+  }, [store])
+
+  useEffect(() => {
+    if (loaded) void store.setSetting('metronome', { bpm, sigIndex, subIndex })
+  }, [store, loaded, bpm, sigIndex, subIndex])
 
   const stop = () => {
     trackRef.current?.stop()
@@ -37,10 +64,9 @@ export function MetronomeView() {
     setRunning(true)
   }
 
-  // Restart with new settings while running; stop on unmount.
+  // Restart with new settings while running.
   useEffect(() => {
     if (running) start()
-    return () => trackRef.current?.stop()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bpm, sigIndex, subIndex])
 
@@ -56,7 +82,20 @@ export function MetronomeView() {
   }
 
   return (
-    <section>
+    <DropWidget
+      pill={
+        <>
+          <span className={`widget-dot${running ? ' running' : ''}${activeBeat === 0 ? ' downbeat' : ''}`} />
+          ♩ {bpm}
+        </>
+      }
+      active={running}
+      onToggle={running ? stop : start}
+      expanded={expanded}
+      setExpanded={setExpanded}
+      toggleLabel={running ? 'Stop metronome' : 'Start metronome'}
+      panelLabel="Metronome settings"
+    >
       <div className="metro-bpm">
         <button className="bpm-nudge" onClick={() => setBpm((b) => clampBpm(b - 5))} aria-label="Slower">
           −5
@@ -111,9 +150,9 @@ export function MetronomeView() {
         ))}
       </div>
 
-      <button className="play-btn" onClick={running ? stop : start}>
+      <button className="play-btn panel-play" onClick={running ? stop : start}>
         {running ? '■ Stop' : '▶ Start'}
       </button>
-    </section>
+    </DropWidget>
   )
 }

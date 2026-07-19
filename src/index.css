@@ -33,6 +33,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   margin-bottom: 28px;
   gap: 12px;
 }
@@ -550,4 +551,293 @@ input[type='range'] {
 
 .backup-message {
   color: var(--text-dim);
+}
+
+/* Header widgets (tuner + metronome pills with drop-down panels) */
+
+.header-widgets {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget {
+  position: relative;
+}
+
+.widget-pill {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.widget-pill.active {
+  border-color: var(--accent);
+}
+
+.widget-toggle,
+.widget-chevron {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.widget-toggle {
+  gap: 6px;
+  padding: 6px 4px 6px 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.widget-chevron {
+  color: var(--text-dim);
+  padding: 6px 10px 6px 4px;
+  font-size: 0.65rem;
+}
+
+.widget-toggle:hover,
+.widget-chevron:hover {
+  background: var(--surface-hover);
+}
+
+.widget-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.1s ease, transform 0.05s ease;
+}
+
+.widget-dot.running {
+  background: var(--accent);
+}
+
+.widget-dot.downbeat {
+  background: var(--good);
+  transform: scale(1.3);
+}
+
+.pill-in-tune {
+  color: var(--good);
+}
+
+.widget-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(400px, calc(100vw - 40px));
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  z-index: 40;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 560px) {
+  .widget-panel,
+  .widget-panel.tuner-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: 84px;
+    width: auto;
+  }
+}
+
+/* Tuner panel: needle/graph beside the note circle when there's room,
+   stacked (and scrollable) on narrow screens. */
+.widget-panel.tuner-panel {
+  width: min(600px, calc(100vw - 40px));
+}
+
+@media (min-width: 640px) {
+  .widget-panel.tuner-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .widget-panel.tuner-panel .drone-section {
+    border-top: none;
+    border-left: 1px solid var(--border);
+    margin-top: 0;
+    padding-top: 0;
+    padding-left: 18px;
+  }
+}
+
+.widget-panel .play-btn.panel-play {
+  margin: 4px 0 0;
+  padding: 12px;
+}
+
+.widget-panel .bpm-number {
+  font-size: 2.2rem;
+}
+
+.widget-panel .metro-row {
+  margin-bottom: 14px;
+}
+
+.widget-panel .tuner-gate {
+  padding-top: 0;
+  font-size: 0.9rem;
+}
+
+.widget-panel .tuner-note {
+  font-size: 2.2rem;
+  min-height: 2.6rem;
+}
+
+.widget-panel .tuner-scale {
+  margin: 6px 0 12px;
+}
+
+.widget-panel .tuner-track {
+  height: 26px;
+}
+
+.widget-panel .tuner-cents {
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+.tuner-stop {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Pitch history graph */
+
+.pitch-graph {
+  display: block;
+  width: 100%;
+  height: 90px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 0 0 14px;
+}
+
+.pitch-band {
+  fill: rgba(76, 175, 125, 0.12);
+}
+
+.pitch-center {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+polyline.pitch-trace {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+circle.pitch-trace {
+  fill: var(--accent);
+  stroke: none;
+}
+
+polyline.pitch-trace.in-tune {
+  stroke: var(--good);
+}
+
+circle.pitch-trace.in-tune {
+  fill: var(--good);
+}
+
+/* Drone note circle */
+
+.drone-section {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.circle-mode {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.circle-mode button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.circle-mode button:hover {
+  background: var(--surface-hover);
+}
+
+.circle-mode button.selected {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.note-circle {
+  display: block;
+  width: min(230px, 100%);
+  margin: 0 auto;
+}
+
+.note-ring {
+  fill: none;
+  stroke: var(--border);
+}
+
+.note-btn {
+  cursor: pointer;
+}
+
+.note-btn circle {
+  fill: var(--surface);
+  stroke: var(--border);
+  transition: fill 0.1s ease, stroke 0.1s ease;
+}
+
+.note-btn:hover circle {
+  fill: var(--surface-hover);
+}
+
+.note-btn.heard circle {
+  stroke: var(--good);
+  stroke-width: 2;
+}
+
+.note-btn.droning circle {
+  fill: rgba(108, 140, 255, 0.3);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.note-btn text {
+  fill: var(--text);
+  font-size: 12px;
+  user-select: none;
+}
+
+.drone-status {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin: 8px 0 10px;
+  min-height: 1.2em;
 }

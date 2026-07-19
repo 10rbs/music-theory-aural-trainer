@@ -38,17 +38,18 @@ src/
     theory/        notes, intervals, chords, scales, keys (M4)
     exercises/     exercise contract, registry, per-drill generators+graders, seeded RNG
     playback/      PlaybackSpec types + builders (notes+beats+bpm → timed events)
-    pitch/         detect.ts (autocorrelation/MPM on Float32Array), cents.ts   (M3)
+    pitch/         detect.ts (autocorrelation/MPM on Float32Array), cents.ts,
+                   history.ts (pitch-history graph math)                        (M3/M4.5)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
     streak.ts      pure streak logic, dates passed in
     assignments.ts date-seeded daily scale assignments                          (M4)
   shell/
     audio/         context (lazy AudioContext, resume-on-gesture), synth,
-                   scheduler (lookahead driver), mic (M3)
+                   scheduler (lookahead driver), mic (M3), drone (M4.5)
     storage/       ProgressStore interface, idb-store, migrate-v0
   features/        drills/, tuner/, metronome/, practice/, stats/
-  routes/          __root, index, drill.$exerciseId, tuner, metronome, practice
-  components/      shared primitives
+  routes/          __root, index, drill.$exerciseId, practice
+  components/      shared primitives (DropWidget — header pill + drop-down panel)
 ```
 
 ## Exercise contract
@@ -109,6 +110,10 @@ def and renders the component matching its `interaction`.
 - Tuner mic pipeline: explicit user opt-in button → `getUserMedia` (echo
   cancellation/AGC off) → AnalyserNode → Float32Array frames → pure
   `detectPitch` in core.
+- Tuner and metronome are header widgets mounted in the root layout
+  (`routes/__root.tsx`), so their audio keeps running across route changes
+  (M4.5). The drone (`shell/audio/drone.ts`) is a single sustained oscillator;
+  note switches glide frequency instead of restarting.
 
 ## Deployment
 

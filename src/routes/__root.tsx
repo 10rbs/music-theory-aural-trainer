@@ -1,10 +1,14 @@
 import { Link, Outlet, createRootRoute } from '@tanstack/react-router'
 import { StreakBadge } from '../features/stats/StreakBadge'
+import { TunerWidget } from '../features/tuner/TunerWidget'
+import { MetronomeWidget } from '../features/metronome/MetronomeWidget'
 
 export const Route = createRootRoute({
   component: RootLayout,
 })
 
+// Tuner and metronome live in the header on every page so they keep running
+// (and sounding) across navigation.
 function RootLayout() {
   return (
     <div className="app">
@@ -13,11 +17,13 @@ function RootLayout() {
           <h1>Aural Trainer</h1>
         </Link>
         <nav>
-          <Link to="/tuner">Tuner</Link>
-          <Link to="/metronome">Metronome</Link>
           <Link to="/practice">Practice</Link>
         </nav>
-        <StreakBadge />
+        <div className="header-widgets">
+          <TunerWidget />
+          <MetronomeWidget />
+          <StreakBadge />
+        </div>
       </header>
       <main>
         <Outlet />

@@ -11,6 +11,7 @@ Status legend: ✅ done · 🚧 in progress · ⬜ planned
 | **M2** | ✅ | Metronome | Pure rhythm timing math in core, lookahead scheduler in shell, tempo/time signatures/subdivisions, tap tempo, visual beat indicator |
 | **M3** | ✅ | Tuner | Pitch detection (MPM) in core + tests, mic adapter + permission UX, note + cents needle, A4 calibration (438–443) |
 | **M4** | ✅ | Scale practice + dashboard | Date-keyed daily scale rotation, reference playback at tempo, proper note spelling (`keys.ts`), practice card on home, export/import JSON backup |
+| **M4.5** | ✅ | TE-style header widgets | Tuner + metronome recast as always-available header drop-widgets (pill toggles the tool, chevron drops the panel; keep running across navigation). Tuner gains a pitch-history graph and a drone note circle (octave 2–5, A4-aware). Dashboard is the main page; `/tuner` + `/metronome` routes removed. Metronome + drone settings persisted |
 | **M5+** | ⬜ | Course-qualification features (rubric-gated) | See below |
 
 ## M5+ — waiting on official rubrics
