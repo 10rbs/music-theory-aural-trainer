@@ -1,4 +1,5 @@
 import { Link, Outlet, createRootRoute } from '@tanstack/react-router'
+import { StreakBadge } from '../features/stats/StreakBadge'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -16,6 +17,7 @@ function RootLayout() {
           <Link to="/metronome">Metronome</Link>
           <Link to="/practice">Practice</Link>
         </nav>
+        <StreakBadge />
       </header>
       <main>
         <Outlet />

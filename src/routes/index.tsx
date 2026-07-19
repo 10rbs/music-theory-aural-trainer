@@ -1,27 +1,45 @@
+import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { EXERCISES } from '../core/exercises/registry'
+import { useStore } from '../features/stats/store-context'
+import type { ExerciseStats } from '../shell/storage/types'
 
 export const Route = createFileRoute('/')({
   component: Home,
 })
 
-// Drill list is hardcoded until the exercise registry lands in M1.
-const DRILLS = [
-  { id: 'interval-id', title: 'Intervals', blurb: 'Identify the distance between two notes.' },
-  { id: 'chord-quality', title: 'Chords', blurb: 'Identify chord quality by ear.' },
-  { id: 'scale-id', title: 'Scales', blurb: 'Identify the scale from an ascending run.' },
-]
-
 function Home() {
+  const store = useStore()
+  const [stats, setStats] = useState<Record<string, ExerciseStats>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    void Promise.all(
+      EXERCISES.map(async (e) => [e.id, await store.getExerciseStats(e.id)] as const),
+    ).then((entries) => {
+      if (!cancelled) setStats(Object.fromEntries(entries))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [store])
+
   return (
     <section>
       <p className="tagline">Train your ear. A few minutes a day.</p>
       <div className="mode-grid">
-        {DRILLS.map((d) => (
-          <Link key={d.id} to="/drill/$exerciseId" params={{ exerciseId: d.id }} className="mode-card">
-            <h2>{d.title}</h2>
-            <p>{d.blurb}</p>
-          </Link>
-        ))}
+        {EXERCISES.map((e) => {
+          const s = stats[e.id]
+          return (
+            <Link key={e.id} to="/drill/$exerciseId" params={{ exerciseId: e.id }} className="mode-card">
+              <h2>{e.title}</h2>
+              <p>{e.blurb}</p>
+              <span className="mode-stat">
+                {s && s.total > 0 ? `${s.correct}/${s.total} correct` : 'No attempts yet'}
+              </span>
+            </Link>
+          )
+        })}
       </div>
     </section>
   )
