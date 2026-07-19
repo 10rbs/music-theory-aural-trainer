@@ -1,62 +1,14 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aural Trainer</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="app">
-    <header>
-      <h1>Aural Trainer</h1>
-      <div class="streak-badge">
-        <span class="fire">🔥</span>
-        <span id="streak-count">0</span>
-        <span class="streak-label">day streak</span>
-      </div>
-    </header>
-
-    <main>
-      <section id="screen-home" class="screen">
-        <p class="tagline">Train your ear. A few minutes a day.</p>
-        <div class="mode-grid">
-          <button class="mode-card" data-mode="intervals">
-            <h2>Intervals</h2>
-            <p>Identify the distance between two notes.</p>
-            <span class="mode-stat" id="stat-intervals">No attempts yet</span>
-          </button>
-          <button class="mode-card" data-mode="chords">
-            <h2>Chords</h2>
-            <p>Identify chord quality by ear.</p>
-            <span class="mode-stat" id="stat-chords">No attempts yet</span>
-          </button>
-          <button class="mode-card" data-mode="scales">
-            <h2>Scales</h2>
-            <p>Identify the scale from an ascending run.</p>
-            <span class="mode-stat" id="stat-scales">No attempts yet</span>
-          </button>
-        </div>
-      </section>
-
-      <section id="screen-drill" class="screen hidden">
-        <div class="drill-header">
-          <button id="back-btn" class="link-btn">&larr; Back</button>
-          <h2 id="drill-title">Training</h2>
-          <span id="session-score" class="session-score">Session: 0/0</span>
-        </div>
-
-        <button id="play-btn" class="play-btn">&#9654; Play again</button>
-
-        <div id="choices" class="choices"></div>
-
-        <p id="feedback" class="feedback"></p>
-
-        <button id="next-btn" class="next-btn hidden">Next &rarr;</button>
-      </section>
-    </main>
-  </div>
-
-  <script type="module" src="src/app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#12141c" />
+    <title>Aural Trainer</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
