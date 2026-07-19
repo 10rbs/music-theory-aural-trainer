@@ -16,3 +16,9 @@ export function midiToFreq(midi: number, a4 = 440): number {
 export function pitchClassMidi(pc: number, octave: number): number {
   return (octave + 1) * 12 + pc
 }
+
+/** Pitch classes in chromatic order (C at the top of the note circle). */
+export const CHROMATIC_PCS: readonly number[] = Array.from({ length: 12 }, (_, i) => i)
+
+/** Pitch classes in circle-of-fifths order: C G D A E B F# C# G# D# A# F. */
+export const FIFTHS_PCS: readonly number[] = Array.from({ length: 12 }, (_, i) => (i * 7) % 12)

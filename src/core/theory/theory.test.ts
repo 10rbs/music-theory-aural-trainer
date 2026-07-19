@@ -1,7 +1,7 @@
 // Ported from the v0-vanilla browser test runner (tests/theory.test.js).
 
 import { describe, expect, test } from 'vitest'
-import { midiToName, midiToFreq, pitchClassMidi } from './notes'
+import { midiToName, midiToFreq, pitchClassMidi, CHROMATIC_PCS, FIFTHS_PCS, NOTE_NAMES } from './notes'
 import { INTERVALS } from './intervals'
 import { CHORDS } from './chords'
 import { SCALES } from './scales'
@@ -46,6 +46,24 @@ describe('pitchClassMidi', () => {
 
   test('B3 is MIDI 59 (octave boundary below middle C)', () => {
     expect(pitchClassMidi(11, 3)).toBe(59)
+  })
+})
+
+describe('note circle orders', () => {
+  test('both orders cover all 12 pitch classes exactly once', () => {
+    expect([...CHROMATIC_PCS].sort((a, b) => a - b)).toEqual(Array.from({ length: 12 }, (_, i) => i))
+    expect([...FIFTHS_PCS].sort((a, b) => a - b)).toEqual(Array.from({ length: 12 }, (_, i) => i))
+  })
+
+  test('fifths order steps a perfect fifth (7 semitones) each time, starting at C', () => {
+    expect(FIFTHS_PCS[0]).toBe(0)
+    for (let i = 1; i < 12; i++) {
+      expect((FIFTHS_PCS[i] - FIFTHS_PCS[i - 1] + 12) % 12).toBe(7)
+    }
+  })
+
+  test('fifths order spells C G D A E B …', () => {
+    expect(FIFTHS_PCS.slice(0, 6).map((pc) => NOTE_NAMES[pc])).toEqual(['C', 'G', 'D', 'A', 'E', 'B'])
   })
 })
 

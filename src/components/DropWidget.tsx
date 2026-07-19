@@ -11,6 +11,8 @@ interface DropWidgetProps {
   setExpanded: (v: boolean) => void
   toggleLabel: string
   panelLabel: string
+  /** Extra class on the drop-down panel (e.g. for per-widget layout). */
+  panelClassName?: string
   children: ReactNode
 }
 
@@ -27,6 +29,7 @@ export function DropWidget({
   setExpanded,
   toggleLabel,
   panelLabel,
+  panelClassName,
   children,
 }: DropWidgetProps) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -62,7 +65,9 @@ export function DropWidget({
           {expanded ? '▴' : '▾'}
         </button>
       </div>
-      {expanded && <div className="widget-panel">{children}</div>}
+      {expanded && (
+        <div className={`widget-panel${panelClassName ? ` ${panelClassName}` : ''}`}>{children}</div>
+      )}
     </div>
   )
 }

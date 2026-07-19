@@ -632,7 +632,7 @@ input[type='range'] {
   top: calc(100% + 10px);
   right: 0;
   width: min(400px, calc(100vw - 40px));
-  max-height: min(560px, calc(100vh - 120px));
+  max-height: calc(100vh - 104px);
   overflow-y: auto;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -643,12 +643,36 @@ input[type='range'] {
 }
 
 @media (max-width: 560px) {
-  .widget-panel {
+  .widget-panel,
+  .widget-panel.tuner-panel {
     position: fixed;
     left: 12px;
     right: 12px;
     top: 84px;
     width: auto;
+  }
+}
+
+/* Tuner panel: needle/graph beside the note circle when there's room,
+   stacked (and scrollable) on narrow screens. */
+.widget-panel.tuner-panel {
+  width: min(600px, calc(100vw - 40px));
+}
+
+@media (min-width: 640px) {
+  .widget-panel.tuner-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .widget-panel.tuner-panel .drone-section {
+    border-top: none;
+    border-left: 1px solid var(--border);
+    margin-top: 0;
+    padding-top: 0;
+    padding-left: 18px;
   }
 }
 
@@ -671,12 +695,21 @@ input[type='range'] {
 }
 
 .widget-panel .tuner-note {
-  font-size: 3rem;
-  min-height: 3.4rem;
+  font-size: 2.2rem;
+  min-height: 2.6rem;
 }
 
 .widget-panel .tuner-scale {
-  margin: 10px 0 16px;
+  margin: 6px 0 12px;
+}
+
+.widget-panel .tuner-track {
+  height: 26px;
+}
+
+.widget-panel .tuner-cents {
+  margin-top: 4px;
+  font-size: 0.8rem;
 }
 
 .tuner-stop {
@@ -689,7 +722,7 @@ input[type='range'] {
 .pitch-graph {
   display: block;
   width: 100%;
-  height: 120px;
+  height: 90px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -729,13 +762,39 @@ circle.pitch-trace.in-tune {
 
 .drone-section {
   border-top: 1px solid var(--border);
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.circle-mode {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.circle-mode button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.circle-mode button:hover {
+  background: var(--surface-hover);
+}
+
+.circle-mode button.selected {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .note-circle {
   display: block;
-  width: min(240px, 100%);
+  width: min(230px, 100%);
   margin: 0 auto;
 }
 
@@ -779,6 +838,6 @@ circle.pitch-trace.in-tune {
   text-align: center;
   color: var(--text-dim);
   font-size: 0.8rem;
-  margin: 10px 0 12px;
+  margin: 8px 0 10px;
   min-height: 1.2em;
 }

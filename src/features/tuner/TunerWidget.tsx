@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { detectPitch } from '../../core/pitch/detect'
 import { freqToNote } from '../../core/pitch/cents'
 import { pushReading, type PitchSample } from '../../core/pitch/history'
-import { NOTE_NAMES, midiToFreq, pitchClassMidi } from '../../core/theory/notes'
+import { CHROMATIC_PCS, FIFTHS_PCS, NOTE_NAMES, midiToFreq, pitchClassMidi } from '../../core/theory/notes'
 import { startMic, type MicSession } from '../../shell/audio/mic'
 import { startDrone, type Drone } from '../../shell/audio/drone'
 import { DropWidget } from '../../components/DropWidget'
@@ -24,6 +24,8 @@ interface Reading {
   cents: number
 }
 
+type CircleMode = 'chromatic' | 'fifths'
+
 export function TunerWidget() {
   const store = useStore()
   const [micState, setMicState] = useState<MicState>('idle')
@@ -34,6 +36,7 @@ export function TunerWidget() {
   const [expanded, setExpanded] = useState(false)
   const [dronePc, setDronePc] = useState<number | null>(null)
   const [octave, setOctave] = useState(DEFAULT_OCTAVE)
+  const [circleMode, setCircleMode] = useState<CircleMode>('chromatic')
 
   const sessionRef = useRef<MicSession | null>(null)
   const droneRef = useRef<Drone | null>(null)
@@ -47,6 +50,9 @@ export function TunerWidget() {
     void store.getSetting('a4', 440).then(setA4)
     void store.getSetting('droneOctave', DEFAULT_OCTAVE).then((o) => {
       if (OCTAVES.includes(o)) setOctave(o)
+    })
+    void store.getSetting<CircleMode>('circleMode', 'chromatic').then((m) => {
+      if (m === 'chromatic' || m === 'fifths') setCircleMode(m)
     })
     return () => {
       sessionRef.current?.stop()
@@ -65,6 +71,11 @@ export function TunerWidget() {
     setA4(value)
     void store.setSetting('a4', value)
     retune(octave, value)
+  }
+
+  const changeCircleMode = (mode: CircleMode) => {
+    setCircleMode(mode)
+    void store.setSetting('circleMode', mode)
   }
 
   const changeOctave = (value: number) => {
@@ -153,6 +164,7 @@ export function TunerWidget() {
       setExpanded={setExpanded}
       toggleLabel={micActive ? 'Stop tuner' : 'Start tuner'}
       panelLabel="Tuner panel"
+      panelClassName="tuner-panel"
     >
       {!micActive && (
         <div className="tuner-gate">
@@ -213,7 +225,22 @@ export function TunerWidget() {
       )}
 
       <div className="drone-section">
+        <div className="circle-mode" role="group" aria-label="Note circle order">
+          <button
+            className={circleMode === 'chromatic' ? 'selected' : ''}
+            onClick={() => changeCircleMode('chromatic')}
+          >
+            Chromatic
+          </button>
+          <button
+            className={circleMode === 'fifths' ? 'selected' : ''}
+            onClick={() => changeCircleMode('fifths')}
+          >
+            Circle of 5ths
+          </button>
+        </div>
         <NoteCircle
+          order={circleMode === 'fifths' ? FIFTHS_PCS : CHROMATIC_PCS}
           dronePc={dronePc}
           detectedPc={reading ? reading.midi % 12 : null}
           onTap={tapNote}
