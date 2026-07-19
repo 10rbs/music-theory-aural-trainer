@@ -13,10 +13,12 @@ interface NoteCircleProps {
   /** Pitch class currently heard by the mic, or null. */
   detectedPc: number | null
   onTap: (pc: number) => void
+  /** Mouse-hover preview (no-op on touch devices, which never hover). */
+  onPreview: (pc: number) => void
 }
 
 /** TE-style circle of the 12 pitch classes. Tap a note to toggle its drone. */
-export function NoteCircle({ order, dronePc, detectedPc, onTap }: NoteCircleProps) {
+export function NoteCircle({ order, dronePc, detectedPc, onTap, onPreview }: NoteCircleProps) {
   return (
     <svg className="note-circle" viewBox={`0 0 ${SIZE} ${SIZE}`} role="group" aria-label="Drone note circle">
       <circle cx={C} cy={C} r={RING_R} className="note-ring" />
@@ -31,6 +33,7 @@ export function NoteCircle({ order, dronePc, detectedPc, onTap }: NoteCircleProp
             key={name}
             className={cls}
             onClick={() => onTap(pc)}
+            onMouseEnter={() => onPreview(pc)}
             role="button"
             aria-label={`Drone ${name}`}
             aria-pressed={pc === dronePc}

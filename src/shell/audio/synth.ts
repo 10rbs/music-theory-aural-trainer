@@ -29,6 +29,12 @@ function playFreqAt(ctx: AudioContext, freq: number, startTime: number, duration
   osc.stop(startTime + duration + 0.05)
 }
 
+/** Play a single short tone at an exact frequency (e.g. note-circle hover preview). */
+export function playFreq(freq: number, duration = 0.5): void {
+  const ctx = ensureAudioContext()
+  playFreqAt(ctx, freq, ctx.currentTime, duration, NOTE_GAIN)
+}
+
 /** Play a PlaybackSpec. Returns the total duration in seconds. */
 export function playSpec(spec: PlaybackSpec): number {
   const ctx = ensureAudioContext()

@@ -5,6 +5,8 @@ import { pushReading, type PitchSample } from '../../core/pitch/history'
 import { CHROMATIC_PCS, FIFTHS_PCS, NOTE_NAMES, midiToFreq, pitchClassMidi } from '../../core/theory/notes'
 import { startMic, type MicSession } from '../../shell/audio/mic'
 import { startDrone, type Drone } from '../../shell/audio/drone'
+import { playFreq } from '../../shell/audio/synth'
+import { ensureAudioContext } from '../../shell/audio/context'
 import { DropWidget } from '../../components/DropWidget'
 import { useStore } from '../stats/store-context'
 import { PitchGraph, GRAPH_WINDOW_MS } from './PitchGraph'
@@ -84,6 +86,11 @@ export function TunerWidget() {
     retune(value, a4)
   }
 
+  const previewNote = (pc: number) => {
+    if (pc === dronePc) return // already sounding
+    playFreq(droneFreq(pc, octave, a4))
+  }
+
   const tapNote = (pc: number) => {
     if (dronePc === pc) {
       droneRef.current?.stop()
@@ -161,7 +168,12 @@ export function TunerWidget() {
       active={micActive || dronePc !== null}
       onToggle={micActive ? disable : () => void enable()}
       expanded={expanded}
-      setExpanded={setExpanded}
+      setExpanded={(v) => {
+        // The expand click is a user gesture — warm the AudioContext so
+        // hover previews (which aren't gestures) can sound right away.
+        if (v) ensureAudioContext()
+        setExpanded(v)
+      }}
       toggleLabel={micActive ? 'Stop tuner' : 'Start tuner'}
       panelLabel="Tuner panel"
       panelClassName="tuner-panel"
@@ -244,6 +256,7 @@ export function TunerWidget() {
           dronePc={dronePc}
           detectedPc={reading ? reading.midi % 12 : null}
           onTap={tapNote}
+          onPreview={previewNote}
         />
         <div className="drone-status">
           {dronePc !== null
