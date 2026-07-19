@@ -1,15 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { TunerView } from '../features/tuner/TunerView'
 
 export const Route = createFileRoute('/tuner')({
-  component: TunerPage,
+  component: TunerView,
 })
-
-// Placeholder — M3 adds mic capture + pitch detection (docs/ROADMAP.md).
-function TunerPage() {
-  return (
-    <section>
-      <h2>Tuner</h2>
-      <p className="tagline">Chromatic tuner coming in M3.</p>
-    </section>
-  )
-}

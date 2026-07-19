@@ -345,3 +345,90 @@ input[type='range'] {
   background: var(--accent);
   transform: scale(1.35);
 }
+
+/* Tuner */
+
+.tuner-gate {
+  text-align: center;
+  padding-top: 24px;
+}
+
+.tuner-error {
+  color: var(--bad);
+  font-size: 0.9rem;
+}
+
+.tuner-active {
+  padding-top: 12px;
+}
+
+.tuner-note {
+  text-align: center;
+  font-size: 4.5rem;
+  font-weight: 700;
+  min-height: 5.4rem;
+  line-height: 1.1;
+}
+
+.tuner-note.in-tune {
+  color: var(--good);
+}
+
+.tuner-scale {
+  margin: 12px 0 28px;
+}
+
+.tuner-ticks {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+}
+
+.tuner-tick.zero {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.tuner-track {
+  position: relative;
+  height: 34px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tuner-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--border);
+}
+
+.tuner-needle {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--bad);
+  transition: left 0.08s linear, background 0.15s ease;
+}
+
+.tuner-needle.in-tune {
+  background: var(--good);
+}
+
+.tuner-cents {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-top: 8px;
+  min-height: 1.2em;
+}
