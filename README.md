@@ -15,6 +15,15 @@ python3 -m http.server 8000
 
 Or deploy the folder as-is to GitHub Pages, Netlify, Vercel, etc.
 
+## Running tests
+
+No test framework or install step needed - open `tests/run.html` through the same local server:
+
+```bash
+python3 -m http.server 8000
+# then open http://localhost:8000/tests/run.html
+```
+
 ## Structure
 
 - `index.html` - page shell and screens (home + drill)
@@ -24,6 +33,8 @@ Or deploy the folder as-is to GitHub Pages, Netlify, Vercel, etc.
 - `src/drills.js` - question generators for each drill mode
 - `src/storage.js` - localStorage-backed daily streak and per-mode stats
 - `src/app.js` - UI wiring / screen state
+- `tests/theory.test.js` - plain-JS assertions for `src/theory.js`
+- `tests/run.html` - browser-based test runner
 
 ## Current features
 
