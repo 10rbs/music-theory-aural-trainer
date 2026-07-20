@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { ALL_SCALE_TYPES, dailyAssignment, dayNumber } from './assignments'
+import { ALL_SCALE_TYPES, dailyAssignment, dayNumber, shiftOctaves } from './assignments'
 
 describe('dayNumber', () => {
   test('epoch day and rollover', () => {
@@ -104,6 +104,29 @@ describe('dailyAssignment with enabled scale types', () => {
 
   test('no enabled types → empty assignment', () => {
     expect(dailyAssignment('2026-07-19', [])).toEqual([])
+  })
+})
+
+describe('shiftOctaves', () => {
+  test('moves notation and playback together, leaves identity fields alone', () => {
+    const [item] = dailyAssignment('2026-07-19')
+    const up = shiftOctaves(item, 1)
+    expect(up.midi).toEqual(item.midi.map((m) => m + 12))
+    expect(up.spelled.map((n) => n.midi)).toEqual(item.spelled.map((n) => n.midi + 12))
+    expect(up.spelled.map((n) => [n.letter, n.alter])).toEqual(
+      item.spelled.map((n) => [n.letter, n.alter]),
+    )
+    expect(up.id).toBe(item.id)
+    expect(up.title).toBe(item.title)
+    expect(up.notes).toEqual(item.notes)
+
+    const down = shiftOctaves(item, -2)
+    expect(down.midi[0]).toBe(item.midi[0] - 24)
+  })
+
+  test('zero shift returns the item unchanged', () => {
+    const [item] = dailyAssignment('2026-07-19')
+    expect(shiftOctaves(item, 0)).toBe(item)
   })
 })
 

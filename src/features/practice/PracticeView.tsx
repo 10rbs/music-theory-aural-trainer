@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ALL_SCALE_TYPES, dailyAssignment, type AssignmentItem } from '../../core/assignments'
+import {
+  ALL_SCALE_TYPES,
+  dailyAssignment,
+  shiftOctaves,
+  type AssignmentItem,
+} from '../../core/assignments'
 import { type Clef } from '../../core/notation/staff'
 import { melodic } from '../../core/playback/spec'
 import { toLocalDateStr } from '../../core/streak'
@@ -8,6 +13,12 @@ import { settingsEvents, statsEvents, useStore } from '../stats/store-context'
 import { ScaleStaff } from './ScaleStaff'
 
 const TEMPI = [60, 80, 100, 120, 144]
+
+// octave-shift limits: at most ±2 from the clef's home register, and never
+// past the piano's range (A0..C8)
+const MAX_OCTAVE_SHIFT = 2
+const MIN_MIDI = 21
+const MAX_MIDI = 108
 
 const TYPE_LABELS: Record<string, string> = {
   'Major (Ionian)': 'Major',
@@ -25,6 +36,8 @@ export function PracticeView() {
   const [clef, setClef] = useState<Clef>('treble')
   const [done, setDone] = useState<Set<string>>(new Set())
   const [bpm, setBpm] = useState(100)
+  // per-item octave shift, relative to the clef's home register; not persisted
+  const [octaves, setOctaves] = useState<Record<string, number>>({})
 
   const completionKey = `practice:${today}`
 
@@ -40,6 +53,9 @@ export function PracticeView() {
     settingsEvents.addEventListener('settings', load)
     return () => settingsEvents.removeEventListener('settings', load)
   }, [store])
+
+  // octave shifts are relative to the clef's register — reset on clef change
+  useEffect(() => setOctaves({}), [clef])
 
   const items = useMemo<AssignmentItem[]>(
     () => (enabled ? dailyAssignment(today, enabled, clef) : []),
@@ -120,13 +136,37 @@ export function PracticeView() {
       )}
 
       <div className="practice-list">
-        {items.map((item) => {
-          const isDone = done.has(item.id)
+        {items.map((baseItem) => {
+          const isDone = done.has(baseItem.id)
+          const shift = octaves[baseItem.id] ?? 0
+          const item = shiftOctaves(baseItem, shift)
+          const canShiftDown = shift > -MAX_OCTAVE_SHIFT && item.midi[0] - 12 >= MIN_MIDI
+          const canShiftUp = shift < MAX_OCTAVE_SHIFT && item.midi[7] + 12 <= MAX_MIDI
+          const setShift = (n: number) => setOctaves({ ...octaves, [baseItem.id]: n })
           return (
             <div key={item.id} className={`practice-item${isDone ? ' done' : ''}`}>
               <div className="practice-info">
                 <h3>{item.title}</h3>
                 <ScaleStaff spelled={item.spelled} clef={clef} label={item.title} />
+                <div className="octave-controls">
+                  <button
+                    onClick={() => setShift(shift - 1)}
+                    disabled={!canShiftDown}
+                    aria-label="Octave down"
+                  >
+                    −
+                  </button>
+                  <span aria-live="polite">
+                    {shift === 0 ? 'octave' : `${shift > 0 ? '+' : ''}${shift} oct`}
+                  </span>
+                  <button
+                    onClick={() => setShift(shift + 1)}
+                    disabled={!canShiftUp}
+                    aria-label="Octave up"
+                  >
+                    +
+                  </button>
+                </div>
                 <p className="practice-notes">{item.notes.join(' ')}</p>
               </div>
               <div className="practice-actions">

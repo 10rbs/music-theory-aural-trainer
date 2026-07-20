@@ -597,6 +597,39 @@ input[type='range'] {
   background: var(--surface-hover);
 }
 
+/* Octave shift (under each staff) */
+
+.octave-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+
+.octave-controls button {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.octave-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.octave-controls span {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  min-width: 44px;
+  text-align: center;
+}
+
 /* Notation staff */
 
 .scale-staff {

@@ -76,6 +76,20 @@ function item(kind: string, tonic: Tonic, s: Scale, clef: Clef, label?: string):
 }
 
 /**
+ * Shift an assignment's register by whole octaves — notation and playback
+ * move together. Spelling, id, and title are untouched.
+ */
+export function shiftOctaves(item: AssignmentItem, octaves: number): AssignmentItem {
+  if (octaves === 0) return item
+  const d = octaves * 12
+  return {
+    ...item,
+    midi: item.midi.map((m) => m + d),
+    spelled: item.spelled.map((n) => ({ ...n, midi: n.midi + d })),
+  }
+}
+
+/**
  * The day's scales — up to three slots: a major, a minor (type rotates), and
  * a mode. `enabled` filters which scale types are eligible; a slot with no
  * enabled types is dropped, and rotation cycles the remaining types evenly.
