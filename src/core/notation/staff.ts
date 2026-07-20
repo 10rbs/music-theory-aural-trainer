@@ -8,18 +8,16 @@ export type Clef = 'treble' | 'alto' | 'tenor' | 'bass'
 interface ClefDef {
   /** diatonic index (octave*7 + letter) of the bottom staff line */
   bottomIndex: number
-  /** MIDI number of the natural note on the bottom staff line */
-  bottomMidi: number
 }
 
 const LETTER_INDEX: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }
 const idx = (letter: string, octave: number) => octave * 7 + LETTER_INDEX[letter]
 
 export const CLEFS: Record<Clef, ClefDef> = {
-  treble: { bottomIndex: idx('E', 4), bottomMidi: 64 }, // E4
-  alto: { bottomIndex: idx('F', 3), bottomMidi: 53 }, // F3 (C clef on middle line)
-  tenor: { bottomIndex: idx('D', 3), bottomMidi: 50 }, // D3 (C clef on 4th line)
-  bass: { bottomIndex: idx('G', 2), bottomMidi: 43 }, // G2
+  treble: { bottomIndex: idx('E', 4) }, // E4
+  alto: { bottomIndex: idx('F', 3) }, // F3 (C clef on middle line)
+  tenor: { bottomIndex: idx('D', 3) }, // D3 (C clef on 4th line)
+  bass: { bottomIndex: idx('G', 2) }, // G2
 }
 
 export interface StaffNoteInput {

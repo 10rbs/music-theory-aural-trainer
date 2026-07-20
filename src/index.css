@@ -1,20 +1,8 @@
 /* Ported from the v0-vanilla style.css — same dark theme. */
 
+/* Light is the default theme; dark is toggled from the header settings menu
+   (data-theme on <html>). */
 :root {
-  --bg: #12141c;
-  --surface: #1b1e2a;
-  --surface-hover: #232738;
-  --border: #2c3040;
-  --text: #eef0f6;
-  --text-dim: #9297a8;
-  --accent: #6c8cff;
-  --good: #4caf7d;
-  --bad: #e5636b;
-  color-scheme: dark;
-}
-
-/* Light theme — toggled from the header settings menu (data-theme on <html>). */
-:root[data-theme='light'] {
   --bg: #f2f3f7;
   --surface: #ffffff;
   --surface-hover: #e9ebf2;
@@ -25,6 +13,19 @@
   --good: #257a52;
   --bad: #c23a44;
   color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #12141c;
+  --surface: #1b1e2a;
+  --surface-hover: #232738;
+  --border: #2c3040;
+  --text: #eef0f6;
+  --text-dim: #9297a8;
+  --accent: #6c8cff;
+  --good: #4caf7d;
+  --bad: #e5636b;
+  color-scheme: dark;
 }
 
 * {
@@ -494,6 +495,13 @@ input[type='range'] {
   border-color: var(--good);
 }
 
+.practice-info {
+  /* fill the card so the staff (flex: 1 inside .staff-row) gets real width
+     instead of collapsing to the text's shrink-to-fit size */
+  flex: 1;
+  min-width: 0;
+}
+
 .practice-info h3 {
   margin: 0 0 4px;
   font-size: 1rem;
@@ -504,51 +512,6 @@ input[type='range'] {
   color: var(--text-dim);
   font-size: 0.9rem;
   letter-spacing: 0.06em;
-}
-
-/* Scale-type settings */
-
-.scale-settings {
-  margin-bottom: 14px;
-  font-size: 0.85rem;
-}
-
-.scale-settings summary {
-  color: var(--text-dim);
-  cursor: pointer;
-  user-select: none;
-  width: fit-content;
-}
-
-.scale-settings[open] summary {
-  color: var(--text);
-}
-
-.scale-settings-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  padding: 10px 14px;
-  margin-top: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
-.scale-settings-options label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-
-.scale-settings-options input {
-  accent-color: var(--accent);
-}
-
-.scale-settings-options label:has(input:checked) {
-  color: var(--text);
 }
 
 /* Settings menu (header widget) */
@@ -597,13 +560,61 @@ input[type='range'] {
   background: var(--surface-hover);
 }
 
-/* Octave shift (under each staff) */
+.settings-section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.settings-section h4 {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.settings-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.85rem;
+}
+
+.settings-checks label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.settings-checks input {
+  accent-color: var(--accent);
+}
+
+.settings-checks label:has(input:checked) {
+  color: var(--text);
+}
+
+/* Staff + octave shift (vertical +/− column left of the notation, so the
+   buttons stay put while the staff grows/shrinks with ledger lines) */
+
+.staff-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
 
 .octave-controls {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin: 2px 0 6px;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .octave-controls button {
@@ -612,7 +623,7 @@ input[type='range'] {
   color: var(--text);
   border-radius: 8px;
   width: 26px;
-  height: 26px;
+  height: 24px;
   line-height: 1;
   font-size: 0.95rem;
   cursor: pointer;
@@ -625,8 +636,7 @@ input[type='range'] {
 
 .octave-controls span {
   color: var(--text-dim);
-  font-size: 0.75rem;
-  min-width: 44px;
+  font-size: 0.72rem;
   text-align: center;
 }
 
@@ -634,9 +644,10 @@ input[type='range'] {
 
 .scale-staff {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   max-width: 330px;
-  margin: 6px 0 4px;
+  margin: 0;
 }
 
 .scale-staff .staff-lines line {

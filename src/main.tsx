@@ -9,10 +9,10 @@ import { StoreProvider } from './features/stats/store-context'
 import { THEME_CACHE_KEY } from './features/settings/SettingsWidget'
 
 // The kv store is the source of truth for the theme (it rides in backups),
-// but reading it is async — this localStorage mirror avoids a dark flash
-// for light-theme users on load.
+// but reading it is async — this localStorage mirror avoids a light flash
+// for dark-theme users on load (light is the default).
 const cachedTheme = localStorage.getItem(THEME_CACHE_KEY)
-if (cachedTheme === 'light') document.documentElement.dataset.theme = 'light'
+if (cachedTheme === 'dark') document.documentElement.dataset.theme = 'dark'
 
 // BASE_URL comes from `base` in vite.config.ts — single source of truth.
 const router = createRouter({ routeTree, basepath: import.meta.env.BASE_URL })

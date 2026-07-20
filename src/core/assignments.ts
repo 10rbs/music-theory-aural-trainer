@@ -12,7 +12,7 @@ import {
   tonicPc,
   type Tonic,
 } from './theory/keys'
-import { CLEFS, type Clef } from './notation/staff'
+import { type Clef } from './notation/staff'
 import { SCALES, type Scale } from './theory/scales'
 
 export interface SpelledNote {
@@ -51,14 +51,23 @@ export function dayNumber(dateStr: string): number {
 const mod = (n: number, m: number) => ((n % m) + m) % m
 
 /**
- * Pick a comfortable starting MIDI note for a tonic, in the clef's register.
- * The window [bottomMidi − 9, bottomMidi + 2] puts every root at diatonic
- * steps −5..1 relative to the clef's bottom line (treble: G3..F♯4, the
- * original register), so the run reads the same on any clef.
+ * Bottom of each clef's 12-semitone root window. Treble/alto/tenor put every
+ * root at diatonic steps −5..1 relative to the clef's bottom line (treble:
+ * G3..F♯4, the original register). Bass sits an octave above that mirror
+ * (B♭2..A3) — mid trombone/euphonium range rather than tuba depths; the
+ * octave-shift buttons cover players who want it lower.
  */
+const ROOT_LO: Record<Clef, number> = {
+  treble: 55, // G3..F♯4
+  alto: 44, // A♭2..G3
+  tenor: 41, // F2..E3
+  bass: 46, // B♭2..A3
+}
+
+/** Pick a comfortable starting MIDI note for a tonic, in the clef's register. */
 function rootMidi(tonic: Tonic, clef: Clef): number {
   const pc = tonicPc(tonic)
-  const lo = CLEFS[clef].bottomMidi - 9
+  const lo = ROOT_LO[clef]
   return lo + ((((pc - lo) % 12) + 12) % 12)
 }
 
@@ -89,10 +98,16 @@ export function shiftOctaves(item: AssignmentItem, octaves: number): AssignmentI
   }
 }
 
+/** Display name for a scale type — drops the parenthesized mode aliases. */
+const typeLabel = (s: Scale) => s.name.replace(/ \((?:Ionian|Aeolian)\)$/, '')
+
 /**
- * The day's scales — up to three slots: a major, a minor (type rotates), and
- * a mode. `enabled` filters which scale types are eligible; a slot with no
- * enabled types is dropped, and rotation cycles the remaining types evenly.
+ * The day's scales — always three slots (major, minor, mode), each with its
+ * own key rotation. A slot normally rotates through the enabled types of its
+ * own category; if the whole category is disabled, the slot borrows from the
+ * full enabled pool instead (with a per-slot offset so borrowed slots
+ * differ), so the daily count stays at three. Only an empty `enabled` yields
+ * an empty assignment.
  */
 export function dailyAssignment(
   dateStr: string,
@@ -100,24 +115,28 @@ export function dailyAssignment(
   clef: Clef = 'treble',
 ): AssignmentItem[] {
   const day = dayNumber(dateStr)
+  const pool = ALL_SCALE_TYPES.filter((n) => enabled.includes(n))
+  if (pool.length === 0) return []
+
   // co-prime-ish strides so key and scale-type cycles drift against each other
   const majorKey = MAJOR_KEYS[mod(day, MAJOR_KEYS.length)]
   const minorKey = MINOR_KEYS[mod(day * 5, MINOR_KEYS.length)]
   const modeKey = MAJOR_KEYS[mod(day * 7 + 3, MAJOR_KEYS.length)]
 
-  const minors = MINOR_ROTATION.filter((n) => enabled.includes(n))
-  const modes = MODE_ROTATION.filter((n) => enabled.includes(n))
+  const pick = (category: readonly string[], slotOffset: number): Scale => {
+    const own = category.filter((n) => pool.includes(n))
+    return own.length > 0
+      ? scale(own[mod(day, own.length)])
+      : scale(pool[mod(day + slotOffset, pool.length)])
+  }
 
-  const items: AssignmentItem[] = []
-  if (enabled.includes(MAJOR_NAME)) {
-    items.push(item('major', majorKey, scale(MAJOR_NAME), clef, 'Major'))
-  }
-  if (minors.length > 0) {
-    const minorType = scale(minors[mod(day, minors.length)])
-    items.push(item('minor', minorKey, minorType, clef, minorType.name.replace(' (Aeolian)', '')))
-  }
-  if (modes.length > 0) {
-    items.push(item('mode', modeKey, scale(modes[mod(day, modes.length)]), clef))
-  }
-  return items
+  const majorType = pick([MAJOR_NAME], 0)
+  const minorType = pick(MINOR_ROTATION, 1)
+  const modeType = pick(MODE_ROTATION, 2)
+
+  return [
+    item('major', majorKey, majorType, clef, typeLabel(majorType)),
+    item('minor', minorKey, minorType, clef, typeLabel(minorType)),
+    item('mode', modeKey, modeType, clef, typeLabel(modeType)),
+  ]
 }

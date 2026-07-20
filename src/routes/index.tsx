@@ -4,7 +4,7 @@ import { EXERCISES } from '../core/exercises/registry'
 import { ALL_SCALE_TYPES, dailyAssignment } from '../core/assignments'
 import { toLocalDateStr } from '../core/streak'
 import { BackupControls } from '../features/stats/BackupControls'
-import { useStore } from '../features/stats/store-context'
+import { settingsEvents, useStore } from '../features/stats/store-context'
 import type { ExerciseStats } from '../shell/storage/types'
 
 export const Route = createFileRoute('/')({
@@ -28,11 +28,15 @@ function Home() {
     void store.getSetting<string[]>(`practice:${today}`, []).then((ids) => {
       if (!cancelled) setPracticeDone(ids.length)
     })
-    void store.getSetting<string[]>('practiceScales', [...ALL_SCALE_TYPES]).then((enabled) => {
-      if (!cancelled) setPracticeTotal(dailyAssignment(today, enabled).length)
-    })
+    const loadTotal = () =>
+      void store.getSetting<string[]>('practiceScales', [...ALL_SCALE_TYPES]).then((enabled) => {
+        if (!cancelled) setPracticeTotal(dailyAssignment(today, enabled).length)
+      })
+    loadTotal()
+    settingsEvents.addEventListener('settings', loadTotal)
     return () => {
       cancelled = true
+      settingsEvents.removeEventListener('settings', loadTotal)
     }
   }, [store, today])
 
