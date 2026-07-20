@@ -41,13 +41,15 @@ src/
     pitch/         detect.ts (autocorrelation/MPM on Float32Array), cents.ts,
                    history.ts (pitch-history graph math)                        (M3/M4.5)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
+    notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6)
     streak.ts      pure streak logic, dates passed in
-    assignments.ts date-seeded daily scale assignments                          (M4)
+    assignments.ts date-seeded daily scale assignments; register follows the
+                   chosen clef, eligible scale types are a setting             (M4/M4.6)
   shell/
     audio/         context (lazy AudioContext, resume-on-gesture), synth,
                    scheduler (lookahead driver), mic (M3), drone (M4.5)
     storage/       ProgressStore interface, idb-store, migrate-v0
-  features/        drills/, tuner/, metronome/, practice/, stats/
+  features/        drills/, tuner/, metronome/, practice/, settings/, stats/
   routes/          __root, index, drill.$exerciseId, practice
   components/      shared primitives (DropWidget — header pill + drop-down panel)
 ```
@@ -94,6 +96,11 @@ def and renders the component matching its `interaction`.
   `getExerciseStats`, `getStreak`, settings kv, `exportAll`/`importAll`.
 - **Schema changes bump the IDB version with an upgrade function.** Attempts are
   never rewritten.
+- Global display settings (`clef`, `theme`, `practiceScales`) live in the kv
+  store like all settings, so they ride along in backups. The theme is
+  additionally mirrored to localStorage (`aural-trainer:theme`) purely so
+  `main.tsx` can apply it before first paint — the kv store stays the source
+  of truth.
 - **v0 migration**: one-time import of the vanilla app's localStorage key
   `aural-trainer:stats:v1` (streak + per-mode aggregates). The old key is left
   untouched for rollback. Note: v0 used UTC dates for "today"; the new code uses

@@ -28,12 +28,23 @@ const ACCIDENTALS: Record<number, string> = {
   [2]: '𝄪',
 }
 
+/** Glyph for an alteration (−2..2), '' for natural. */
+export function accidentalGlyph(alter: number): string {
+  return ACCIDENTALS[alter] ?? '?'
+}
+
+export interface SpelledDegree {
+  letter: (typeof LETTERS)[number]
+  /** semitone offset from the natural letter, −2..2 */
+  alter: number
+}
+
 /**
  * Spell a heptatonic scale from `intervals` (semitones from the tonic,
  * starting at 0, seven degrees — the octave entry may be included and is
- * ignored). Returns 7 note names, e.g. F♯ major → F♯ G♯ A♯ B C♯ D♯ E♯.
+ * ignored). Returns 7 letter+alter pairs, e.g. F♯ major → F♯ G♯ A♯ B C♯ D♯ E♯.
  */
-export function spellScale(tonic: Tonic, intervals: readonly number[]): string[] {
+export function spellScaleDegrees(tonic: Tonic, intervals: readonly number[]): SpelledDegree[] {
   const degrees = intervals.filter((_, i) => i < 7)
   const startIdx = LETTERS.indexOf(tonic.letter)
   const t0 = tonicPc(tonic)
@@ -46,13 +57,17 @@ export function spellScale(tonic: Tonic, intervals: readonly number[]): string[]
     let alter = (targetPc - LETTER_PC[letter]) % 12
     if (alter > 6) alter -= 12
     if (alter < -6) alter += 12
-    const accidental = ACCIDENTALS[alter]
-    if (accidental === undefined) {
+    if (ACCIDENTALS[alter] === undefined) {
       // out of double-accidental range — theoretical key we don't support
       throw new Error(`unspellable degree ${i} of ${tonicName(tonic)}`)
     }
-    return letter + accidental
+    return { letter, alter }
   })
+}
+
+/** Note names for a heptatonic scale — `spellScaleDegrees` as display strings. */
+export function spellScale(tonic: Tonic, intervals: readonly number[]): string[] {
+  return spellScaleDegrees(tonic, intervals).map((d) => d.letter + ACCIDENTALS[d.alter])
 }
 
 /** Circle of fifths through the practical majors: C G D A E B F♯ D♭ A♭ E♭ B♭ F. */

@@ -1,4 +1,5 @@
 import { Link, Outlet, createRootRoute } from '@tanstack/react-router'
+import { SettingsWidget } from '../features/settings/SettingsWidget'
 import { StreakBadge } from '../features/stats/StreakBadge'
 import { TunerWidget } from '../features/tuner/TunerWidget'
 import { MetronomeWidget } from '../features/metronome/MetronomeWidget'
@@ -22,6 +23,7 @@ function RootLayout() {
         <div className="header-widgets">
           <TunerWidget />
           <MetronomeWidget />
+          <SettingsWidget />
           <StreakBadge />
         </div>
       </header>

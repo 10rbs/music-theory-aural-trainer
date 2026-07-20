@@ -1,24 +1,75 @@
-import { useEffect, useState } from 'react'
-import { dailyAssignment, type AssignmentItem } from '../../core/assignments'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  ALL_SCALE_TYPES,
+  dailyAssignment,
+  shiftOctaves,
+  type AssignmentItem,
+} from '../../core/assignments'
+import { type Clef } from '../../core/notation/staff'
 import { melodic } from '../../core/playback/spec'
 import { toLocalDateStr } from '../../core/streak'
 import { playSpec } from '../../shell/audio/synth'
-import { statsEvents, useStore } from '../stats/store-context'
+import { settingsEvents, statsEvents, useStore } from '../stats/store-context'
+import { ScaleStaff } from './ScaleStaff'
 
 const TEMPI = [60, 80, 100, 120, 144]
+
+// octave-shift limits: at most ±2 from the clef's home register, and never
+// past the piano's range (A0..C8)
+const MAX_OCTAVE_SHIFT = 2
+const MIN_MIDI = 21
+const MAX_MIDI = 108
+
+const TYPE_LABELS: Record<string, string> = {
+  'Major (Ionian)': 'Major',
+  'Natural Minor (Aeolian)': 'Natural minor',
+  'Harmonic Minor': 'Harmonic minor',
+  'Melodic Minor': 'Melodic minor',
+  Dorian: 'Dorian',
+  Mixolydian: 'Mixolydian',
+}
 
 export function PracticeView() {
   const store = useStore()
   const today = toLocalDateStr(new Date())
-  const [items] = useState<AssignmentItem[]>(() => dailyAssignment(today))
+  const [enabled, setEnabled] = useState<string[] | null>(null) // null until loaded
+  const [clef, setClef] = useState<Clef>('treble')
   const [done, setDone] = useState<Set<string>>(new Set())
   const [bpm, setBpm] = useState(100)
+  // per-item octave shift, relative to the clef's home register; not persisted
+  const [octaves, setOctaves] = useState<Record<string, number>>({})
 
   const completionKey = `practice:${today}`
 
   useEffect(() => {
+    void store.getSetting<string[]>('practiceScales', [...ALL_SCALE_TYPES]).then(setEnabled)
     void store.getSetting<string[]>(completionKey, []).then((ids) => setDone(new Set(ids)))
   }, [store, completionKey])
+
+  // clef comes from the header settings menu; re-read when it changes there
+  useEffect(() => {
+    const load = () => void store.getSetting<Clef>('clef', 'treble').then(setClef)
+    load()
+    settingsEvents.addEventListener('settings', load)
+    return () => settingsEvents.removeEventListener('settings', load)
+  }, [store])
+
+  // octave shifts are relative to the clef's register — reset on clef change
+  useEffect(() => setOctaves({}), [clef])
+
+  const items = useMemo<AssignmentItem[]>(
+    () => (enabled ? dailyAssignment(today, enabled, clef) : []),
+    [enabled, clef, today],
+  )
+
+  const toggleType = (name: string) => {
+    if (!enabled) return
+    const next = enabled.includes(name)
+      ? enabled.filter((n) => n !== name)
+      : ALL_SCALE_TYPES.filter((n) => n === name || enabled.includes(n)) // keep canonical order
+    setEnabled(next)
+    void store.setSetting('practiceScales', next)
+  }
 
   const play = (item: AssignmentItem) => {
     // ascending + descending, top note not repeated
@@ -45,7 +96,7 @@ export function PracticeView() {
       .then(() => statsEvents.dispatchEvent(new Event('attempt')))
   }
 
-  const allDone = items.every((i) => done.has(i.id))
+  const allDone = items.length > 0 && items.every((i) => done.has(i.id))
 
   return (
     <section>
@@ -63,15 +114,59 @@ export function PracticeView() {
         </label>
       </div>
 
+      <details className="scale-settings">
+        <summary>Scale types</summary>
+        <div className="scale-settings-options">
+          {ALL_SCALE_TYPES.map((name) => (
+            <label key={name}>
+              <input
+                type="checkbox"
+                checked={enabled?.includes(name) ?? true}
+                onChange={() => toggleType(name)}
+              />
+              {TYPE_LABELS[name] ?? name}
+            </label>
+          ))}
+        </div>
+      </details>
+
       {allDone && <p className="feedback correct">All done for today — nice work! 🔥</p>}
+      {enabled !== null && items.length === 0 && (
+        <p className="tagline">No scale types selected — enable at least one above.</p>
+      )}
 
       <div className="practice-list">
-        {items.map((item) => {
-          const isDone = done.has(item.id)
+        {items.map((baseItem) => {
+          const isDone = done.has(baseItem.id)
+          const shift = octaves[baseItem.id] ?? 0
+          const item = shiftOctaves(baseItem, shift)
+          const canShiftDown = shift > -MAX_OCTAVE_SHIFT && item.midi[0] - 12 >= MIN_MIDI
+          const canShiftUp = shift < MAX_OCTAVE_SHIFT && item.midi[7] + 12 <= MAX_MIDI
+          const setShift = (n: number) => setOctaves({ ...octaves, [baseItem.id]: n })
           return (
             <div key={item.id} className={`practice-item${isDone ? ' done' : ''}`}>
               <div className="practice-info">
                 <h3>{item.title}</h3>
+                <ScaleStaff spelled={item.spelled} clef={clef} label={item.title} />
+                <div className="octave-controls">
+                  <button
+                    onClick={() => setShift(shift - 1)}
+                    disabled={!canShiftDown}
+                    aria-label="Octave down"
+                  >
+                    −
+                  </button>
+                  <span aria-live="polite">
+                    {shift === 0 ? 'octave' : `${shift > 0 ? '+' : ''}${shift} oct`}
+                  </span>
+                  <button
+                    onClick={() => setShift(shift + 1)}
+                    disabled={!canShiftUp}
+                    aria-label="Octave up"
+                  >
+                    +
+                  </button>
+                </div>
                 <p className="practice-notes">{item.notes.join(' ')}</p>
               </div>
               <div className="practice-actions">
@@ -92,8 +187,8 @@ export function PracticeView() {
       </div>
 
       <p className="tagline practice-hint">
-        Play each scale on your instrument (ascending and descending), using Listen as a
-        reference. Completing a scale counts toward your daily streak.
+        Play each scale on your instrument (ascending and descending), using Listen and the
+        notation as a reference. Completing a scale counts toward your daily streak.
       </p>
     </section>
   )
