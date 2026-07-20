@@ -98,10 +98,16 @@ export function shiftOctaves(item: AssignmentItem, octaves: number): AssignmentI
   }
 }
 
+/** Display name for a scale type — drops the parenthesized mode aliases. */
+const typeLabel = (s: Scale) => s.name.replace(/ \((?:Ionian|Aeolian)\)$/, '')
+
 /**
- * The day's scales — up to three slots: a major, a minor (type rotates), and
- * a mode. `enabled` filters which scale types are eligible; a slot with no
- * enabled types is dropped, and rotation cycles the remaining types evenly.
+ * The day's scales — always three slots (major, minor, mode), each with its
+ * own key rotation. A slot normally rotates through the enabled types of its
+ * own category; if the whole category is disabled, the slot borrows from the
+ * full enabled pool instead (with a per-slot offset so borrowed slots
+ * differ), so the daily count stays at three. Only an empty `enabled` yields
+ * an empty assignment.
  */
 export function dailyAssignment(
   dateStr: string,
@@ -109,24 +115,28 @@ export function dailyAssignment(
   clef: Clef = 'treble',
 ): AssignmentItem[] {
   const day = dayNumber(dateStr)
+  const pool = ALL_SCALE_TYPES.filter((n) => enabled.includes(n))
+  if (pool.length === 0) return []
+
   // co-prime-ish strides so key and scale-type cycles drift against each other
   const majorKey = MAJOR_KEYS[mod(day, MAJOR_KEYS.length)]
   const minorKey = MINOR_KEYS[mod(day * 5, MINOR_KEYS.length)]
   const modeKey = MAJOR_KEYS[mod(day * 7 + 3, MAJOR_KEYS.length)]
 
-  const minors = MINOR_ROTATION.filter((n) => enabled.includes(n))
-  const modes = MODE_ROTATION.filter((n) => enabled.includes(n))
+  const pick = (category: readonly string[], slotOffset: number): Scale => {
+    const own = category.filter((n) => pool.includes(n))
+    return own.length > 0
+      ? scale(own[mod(day, own.length)])
+      : scale(pool[mod(day + slotOffset, pool.length)])
+  }
 
-  const items: AssignmentItem[] = []
-  if (enabled.includes(MAJOR_NAME)) {
-    items.push(item('major', majorKey, scale(MAJOR_NAME), clef, 'Major'))
-  }
-  if (minors.length > 0) {
-    const minorType = scale(minors[mod(day, minors.length)])
-    items.push(item('minor', minorKey, minorType, clef, minorType.name.replace(' (Aeolian)', '')))
-  }
-  if (modes.length > 0) {
-    items.push(item('mode', modeKey, scale(modes[mod(day, modes.length)]), clef))
-  }
-  return items
+  const majorType = pick([MAJOR_NAME], 0)
+  const minorType = pick(MINOR_ROTATION, 1)
+  const modeType = pick(MODE_ROTATION, 2)
+
+  return [
+    item('major', majorKey, majorType, clef, typeLabel(majorType)),
+    item('minor', minorKey, minorType, clef, typeLabel(minorType)),
+    item('mode', modeKey, modeType, clef, typeLabel(modeType)),
+  ]
 }

@@ -80,24 +80,33 @@ describe('dailyAssignment with enabled scale types', () => {
     expect(dailyAssignment('2026-07-19', ALL_SCALE_TYPES)).toEqual(dailyAssignment('2026-07-19'))
   })
 
-  test('disabling a whole slot drops it', () => {
-    const noMajor = dailyAssignment('2026-07-19', ALL_SCALE_TYPES.filter((n) => n !== 'Major (Ionian)'))
-    expect(noMajor).toHaveLength(2)
-    expect(noMajor.map((i) => i.id.split(':')[0])).toEqual(['minor', 'mode'])
-
-    const onlyMajor = dailyAssignment('2026-07-19', ['Major (Ionian)'])
-    expect(onlyMajor).toHaveLength(1)
-    expect(onlyMajor[0].id).toMatch(/^major:/)
+  test('always three scales while anything is enabled — empty slots borrow', () => {
+    // no majors and no modes enabled: all three slots draw from the minors
+    const enabled = ['Harmonic Minor', 'Melodic Minor']
+    for (let d = 1; d <= 6; d++) {
+      const items = dailyAssignment(`2026-07-0${d}`, enabled)
+      expect(items).toHaveLength(3)
+      expect(items.map((i) => i.id.split(':')[0])).toEqual(['major', 'minor', 'mode'])
+      for (const it of items) {
+        const type = it.title.split(' ').slice(1).join(' ')
+        expect(enabled).toContain(type)
+      }
+    }
   })
 
-  test('minor rotation cycles only the enabled types', () => {
-    const enabled = ['Harmonic Minor', 'Melodic Minor']
+  test('a single enabled type yields three distinct keys of it', () => {
+    const items = dailyAssignment('2026-07-19', ['Major (Ionian)'])
+    expect(items).toHaveLength(3)
+    for (const it of items) expect(it.title.endsWith(' Major')).toBe(true)
+    expect(new Set(items.map((i) => i.title)).size).toBe(3)
+  })
+
+  test('minor slot rotation cycles only the enabled minor types', () => {
+    const enabled = ['Major (Ionian)', 'Harmonic Minor', 'Melodic Minor', 'Dorian', 'Mixolydian']
     const titles = new Set<string>()
     for (let d = 1; d <= 4; d++) {
-      const [minor] = dailyAssignment(`2026-07-0${d}`, enabled)
-      const type = minor.title.split(' ').slice(1).join(' ')
-      expect(enabled).toContain(type === 'Harmonic Minor' ? 'Harmonic Minor' : 'Melodic Minor')
-      titles.add(type)
+      const minor = dailyAssignment(`2026-07-0${d}`, enabled).find((i) => i.id.startsWith('minor:'))!
+      titles.add(minor.title.split(' ').slice(1).join(' '))
     }
     expect(titles).toEqual(new Set(['Harmonic Minor', 'Melodic Minor']))
   })
