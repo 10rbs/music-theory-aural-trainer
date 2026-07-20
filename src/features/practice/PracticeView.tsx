@@ -136,19 +136,8 @@ export function PracticeView() {
               <div className="practice-info">
                 <h3>{item.title}</h3>
                 {display.notation && (
-                  <>
-                    <ScaleStaff spelled={item.spelled} clef={clef} label={item.title} />
-                    <div className="octave-controls">
-                      <button
-                        onClick={() => setShift(kind, shift - 1)}
-                        disabled={!canShiftDown}
-                        aria-label="Octave down"
-                      >
-                        −
-                      </button>
-                      <span aria-live="polite">
-                        {shift === 0 ? 'octave' : `${shift > 0 ? '+' : ''}${shift} oct`}
-                      </span>
+                  <div className="staff-row">
+                    <div className="octave-controls" role="group" aria-label="Octave shift">
                       <button
                         onClick={() => setShift(kind, shift + 1)}
                         disabled={!canShiftUp}
@@ -156,8 +145,19 @@ export function PracticeView() {
                       >
                         +
                       </button>
+                      <span aria-live="polite" title="Octave shift">
+                        {`${shift > 0 ? '+' : ''}${shift}`}
+                      </span>
+                      <button
+                        onClick={() => setShift(kind, shift - 1)}
+                        disabled={!canShiftDown}
+                        aria-label="Octave down"
+                      >
+                        −
+                      </button>
                     </div>
-                  </>
+                    <ScaleStaff spelled={item.spelled} clef={clef} label={item.title} />
+                  </div>
                 )}
                 {display.noteNames && <p className="practice-notes">{item.notes.join(' ')}</p>}
               </div>

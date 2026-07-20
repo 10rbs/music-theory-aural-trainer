@@ -12,7 +12,7 @@ import {
   tonicPc,
   type Tonic,
 } from './theory/keys'
-import { CLEFS, type Clef } from './notation/staff'
+import { type Clef } from './notation/staff'
 import { SCALES, type Scale } from './theory/scales'
 
 export interface SpelledNote {
@@ -51,14 +51,23 @@ export function dayNumber(dateStr: string): number {
 const mod = (n: number, m: number) => ((n % m) + m) % m
 
 /**
- * Pick a comfortable starting MIDI note for a tonic, in the clef's register.
- * The window [bottomMidi − 9, bottomMidi + 2] puts every root at diatonic
- * steps −5..1 relative to the clef's bottom line (treble: G3..F♯4, the
- * original register), so the run reads the same on any clef.
+ * Bottom of each clef's 12-semitone root window. Treble/alto/tenor put every
+ * root at diatonic steps −5..1 relative to the clef's bottom line (treble:
+ * G3..F♯4, the original register). Bass sits an octave above that mirror
+ * (B♭2..A3) — mid trombone/euphonium range rather than tuba depths; the
+ * octave-shift buttons cover players who want it lower.
  */
+const ROOT_LO: Record<Clef, number> = {
+  treble: 55, // G3..F♯4
+  alto: 44, // A♭2..G3
+  tenor: 41, // F2..E3
+  bass: 46, // B♭2..A3
+}
+
+/** Pick a comfortable starting MIDI note for a tonic, in the clef's register. */
 function rootMidi(tonic: Tonic, clef: Clef): number {
   const pc = tonicPc(tonic)
-  const lo = CLEFS[clef].bottomMidi - 9
+  const lo = ROOT_LO[clef]
   return lo + ((((pc - lo) % 12) + 12) % 12)
 }
 

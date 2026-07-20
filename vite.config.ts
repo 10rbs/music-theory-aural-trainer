@@ -22,8 +22,8 @@ export default defineConfig({
         name: 'Aural Trainer',
         short_name: 'Aural',
         description: 'Music theory, aural skills, and daily practice drills',
-        theme_color: '#12141c',
-        background_color: '#12141c',
+        theme_color: '#f2f3f7',
+        background_color: '#f2f3f7',
         display: 'standalone',
         icons: [
           { src: 'icons/pwa-192.png', sizes: '192x192', type: 'image/png' },

@@ -46,13 +46,13 @@ export function SettingsWidget() {
   const store = useStore()
   const [expanded, setExpanded] = useState(false)
   const [clef, setClef] = useState<Clef>('treble')
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('light')
   const [scaleTypes, setScaleTypes] = useState<string[]>([...ALL_SCALE_TYPES])
   const [display, setDisplay] = useState<PracticeDisplay>(DEFAULT_PRACTICE_DISPLAY)
 
   useEffect(() => {
     void store.getSetting<Clef>('clef', 'treble').then(setClef)
-    void store.getSetting<Theme>('theme', 'dark').then((t) => {
+    void store.getSetting<Theme>('theme', 'light').then((t) => {
       setTheme(t)
       applyTheme(t)
     })
@@ -116,13 +116,13 @@ export function SettingsWidget() {
       <div className="settings-row" role="group" aria-label="Theme">
         Theme
         <div className="theme-toggle">
-          {(['dark', 'light'] as const).map((t) => (
+          {(['light', 'dark'] as const).map((t) => (
             <button
               key={t}
               className={theme === t ? 'selected' : ''}
               onClick={() => changeTheme(t)}
             >
-              {t === 'dark' ? 'Dark' : 'Light'}
+              {t === 'light' ? 'Light' : 'Dark'}
             </button>
           ))}
         </div>

@@ -137,8 +137,10 @@ describe('dailyAssignment clef register', () => {
     )
   })
 
-  test('each clef keeps roots at steps −5..1 of its staff (same written layout)', () => {
-    const windows = { treble: [55, 66], alto: [44, 55], tenor: [41, 52], bass: [34, 45] } as const
+  test('each clef keeps roots inside its 12-semitone register window', () => {
+    // bass is deliberately an octave above its treble-mirror window (B♭2..A3,
+    // trombone range) — see ROOT_LO in assignments.ts
+    const windows = { treble: [55, 66], alto: [44, 55], tenor: [41, 52], bass: [46, 57] } as const
     for (const [clef, [lo, hi]] of Object.entries(windows)) {
       for (let d = 1; d <= 28; d++) {
         const date = `2026-07-${String(d).padStart(2, '0')}`
@@ -156,9 +158,9 @@ describe('dailyAssignment clef register', () => {
     expect(bass.map((i) => i.id)).toEqual(treble.map((i) => i.id))
     expect(bass.map((i) => i.notes)).toEqual(treble.map((i) => i.notes))
     for (let i = 0; i < treble.length; i++) {
-      // same pitch classes, some octaves down
+      // same pitch classes, whole octaves apart
       expect((treble[i].midi[0] - bass[i].midi[0]) % 12).toBe(0)
-      expect(bass[i].midi[0]).toBeLessThan(treble[i].midi[0])
+      expect(bass[i].midi[0]).toBeLessThanOrEqual(treble[i].midi[0])
     }
   })
 })

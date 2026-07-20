@@ -1,20 +1,8 @@
 /* Ported from the v0-vanilla style.css — same dark theme. */
 
+/* Light is the default theme; dark is toggled from the header settings menu
+   (data-theme on <html>). */
 :root {
-  --bg: #12141c;
-  --surface: #1b1e2a;
-  --surface-hover: #232738;
-  --border: #2c3040;
-  --text: #eef0f6;
-  --text-dim: #9297a8;
-  --accent: #6c8cff;
-  --good: #4caf7d;
-  --bad: #e5636b;
-  color-scheme: dark;
-}
-
-/* Light theme — toggled from the header settings menu (data-theme on <html>). */
-:root[data-theme='light'] {
   --bg: #f2f3f7;
   --surface: #ffffff;
   --surface-hover: #e9ebf2;
@@ -25,6 +13,19 @@
   --good: #257a52;
   --bad: #c23a44;
   color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #12141c;
+  --surface: #1b1e2a;
+  --surface-hover: #232738;
+  --border: #2c3040;
+  --text: #eef0f6;
+  --text-dim: #9297a8;
+  --accent: #6c8cff;
+  --good: #4caf7d;
+  --bad: #e5636b;
+  color-scheme: dark;
 }
 
 * {
@@ -591,13 +592,22 @@ input[type='range'] {
   color: var(--text);
 }
 
-/* Octave shift (under each staff) */
+/* Staff + octave shift (vertical +/− column left of the notation, so the
+   buttons stay put while the staff grows/shrinks with ledger lines) */
+
+.staff-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
 
 .octave-controls {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin: 2px 0 6px;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .octave-controls button {
@@ -606,7 +616,7 @@ input[type='range'] {
   color: var(--text);
   border-radius: 8px;
   width: 26px;
-  height: 26px;
+  height: 24px;
   line-height: 1;
   font-size: 0.95rem;
   cursor: pointer;
@@ -619,8 +629,7 @@ input[type='range'] {
 
 .octave-controls span {
   color: var(--text-dim);
-  font-size: 0.75rem;
-  min-width: 44px;
+  font-size: 0.72rem;
   text-align: center;
 }
 
@@ -628,9 +637,10 @@ input[type='range'] {
 
 .scale-staff {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   max-width: 330px;
-  margin: 6px 0 4px;
+  margin: 0;
 }
 
 .scale-staff .staff-lines line {
