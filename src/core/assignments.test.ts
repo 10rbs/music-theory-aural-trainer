@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dailyAssignment, dayNumber } from './assignments'
+import { ALL_SCALE_TYPES, dailyAssignment, dayNumber } from './assignments'
 
 describe('dayNumber', () => {
   test('epoch day and rollover', () => {
@@ -55,6 +55,87 @@ describe('dailyAssignment', () => {
       // playable register: G3 (55) up to ~F#5
       expect(it.midi[0]).toBeGreaterThanOrEqual(55)
       expect(it.midi[0]).toBeLessThanOrEqual(66)
+    }
+  })
+
+  test('spelled run matches midi and repeats the tonic spelling at the octave', () => {
+    for (const it of dailyAssignment('2026-07-19')) {
+      expect(it.spelled).toHaveLength(8)
+      expect(it.spelled.map((n) => n.midi)).toEqual(it.midi)
+      const { letter, alter } = it.spelled[0]
+      expect(it.spelled[7]).toEqual({ letter, alter, midi: it.midi[0] + 12 })
+      // letters ascend diatonically: each degree takes the next letter name
+      const letters = 'CDEFGAB'
+      for (let i = 1; i < 7; i++) {
+        expect(letters.indexOf(it.spelled[i].letter)).toBe(
+          (letters.indexOf(it.spelled[i - 1].letter) + 1) % 7,
+        )
+      }
+    }
+  })
+})
+
+describe('dailyAssignment with enabled scale types', () => {
+  test('default (all types) matches the explicit full list', () => {
+    expect(dailyAssignment('2026-07-19', ALL_SCALE_TYPES)).toEqual(dailyAssignment('2026-07-19'))
+  })
+
+  test('disabling a whole slot drops it', () => {
+    const noMajor = dailyAssignment('2026-07-19', ALL_SCALE_TYPES.filter((n) => n !== 'Major (Ionian)'))
+    expect(noMajor).toHaveLength(2)
+    expect(noMajor.map((i) => i.id.split(':')[0])).toEqual(['minor', 'mode'])
+
+    const onlyMajor = dailyAssignment('2026-07-19', ['Major (Ionian)'])
+    expect(onlyMajor).toHaveLength(1)
+    expect(onlyMajor[0].id).toMatch(/^major:/)
+  })
+
+  test('minor rotation cycles only the enabled types', () => {
+    const enabled = ['Harmonic Minor', 'Melodic Minor']
+    const titles = new Set<string>()
+    for (let d = 1; d <= 4; d++) {
+      const [minor] = dailyAssignment(`2026-07-0${d}`, enabled)
+      const type = minor.title.split(' ').slice(1).join(' ')
+      expect(enabled).toContain(type === 'Harmonic Minor' ? 'Harmonic Minor' : 'Melodic Minor')
+      titles.add(type)
+    }
+    expect(titles).toEqual(new Set(['Harmonic Minor', 'Melodic Minor']))
+  })
+
+  test('no enabled types → empty assignment', () => {
+    expect(dailyAssignment('2026-07-19', [])).toEqual([])
+  })
+})
+
+describe('dailyAssignment clef register', () => {
+  test('treble default is unchanged from the clef-less days (G3..F♯4 roots)', () => {
+    expect(dailyAssignment('2026-07-19', ALL_SCALE_TYPES, 'treble')).toEqual(
+      dailyAssignment('2026-07-19'),
+    )
+  })
+
+  test('each clef keeps roots at steps −5..1 of its staff (same written layout)', () => {
+    const windows = { treble: [55, 66], alto: [44, 55], tenor: [41, 52], bass: [34, 45] } as const
+    for (const [clef, [lo, hi]] of Object.entries(windows)) {
+      for (let d = 1; d <= 28; d++) {
+        const date = `2026-07-${String(d).padStart(2, '0')}`
+        for (const it of dailyAssignment(date, ALL_SCALE_TYPES, clef as never)) {
+          expect(it.midi[0]).toBeGreaterThanOrEqual(lo)
+          expect(it.midi[0]).toBeLessThanOrEqual(hi)
+        }
+      }
+    }
+  })
+
+  test('clef changes register but not ids, titles, or spelling', () => {
+    const treble = dailyAssignment('2026-07-19')
+    const bass = dailyAssignment('2026-07-19', ALL_SCALE_TYPES, 'bass')
+    expect(bass.map((i) => i.id)).toEqual(treble.map((i) => i.id))
+    expect(bass.map((i) => i.notes)).toEqual(treble.map((i) => i.notes))
+    for (let i = 0; i < treble.length; i++) {
+      // same pitch classes, some octaves down
+      expect((treble[i].midi[0] - bass[i].midi[0]) % 12).toBe(0)
+      expect(bass[i].midi[0]).toBeLessThan(treble[i].midi[0])
     }
   })
 })

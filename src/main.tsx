@@ -6,6 +6,13 @@ import { routeTree } from './routeTree.gen'
 import { IdbProgressStore } from './shell/storage/idb-store'
 import { migrateV0 } from './shell/storage/migrate-v0'
 import { StoreProvider } from './features/stats/store-context'
+import { THEME_CACHE_KEY } from './features/settings/SettingsWidget'
+
+// The kv store is the source of truth for the theme (it rides in backups),
+// but reading it is async — this localStorage mirror avoids a dark flash
+// for light-theme users on load.
+const cachedTheme = localStorage.getItem(THEME_CACHE_KEY)
+if (cachedTheme === 'light') document.documentElement.dataset.theme = 'light'
 
 // BASE_URL comes from `base` in vite.config.ts — single source of truth.
 const router = createRouter({ routeTree, basepath: import.meta.env.BASE_URL })

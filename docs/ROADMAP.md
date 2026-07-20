@@ -12,6 +12,7 @@ Status legend: ✅ done · 🚧 in progress · ⬜ planned
 | **M3** | ✅ | Tuner | Pitch detection (MPM) in core + tests, mic adapter + permission UX, note + cents needle, A4 calibration (438–443) |
 | **M4** | ✅ | Scale practice + dashboard | Date-keyed daily scale rotation, reference playback at tempo, proper note spelling (`keys.ts`), practice card on home, export/import JSON backup |
 | **M4.5** | ✅ | TE-style header widgets | Tuner + metronome recast as always-available header drop-widgets (pill toggles the tool, chevron drops the panel; keep running across navigation). Tuner gains a pitch-history graph and a drone note circle (octave 2–5, A4-aware). Dashboard is the main page; `/tuner` + `/metronome` routes removed. Metronome + drone settings persisted |
+| **M4.6** | ✅ | Practice notation + settings | Daily scales rendered as staff notation (hand-rolled SVG, pure layout math in `core/notation/` — see `docs/decisions/0001`), scale-type filter on the practice page, header settings menu with clef choice (treble/alto/tenor/bass — clef also shifts the practice register) and dark/light theme |
 | **M5+** | ⬜ | Course-qualification features (rubric-gated) | See below |
 
 ## M5+ — waiting on official rubrics
@@ -25,8 +26,9 @@ provided at a future date. When they arrive, they unlock:
 - **Written theory quizzes** — key signatures, scale/chord spelling (builds on `keys.ts`)
 - **Curriculum / qualification tracking** — rubric-driven practice paths and
   progress toward qual dates
-- **Notation rendering** — evaluate VexFlow vs. hand-rolled SVG at that point
-  (decision record in `docs/decisions/` when it happens)
+- **Richer notation rendering** — M4.6 shipped hand-rolled SVG for scale runs
+  (`docs/decisions/0001-notation-rendering.md`); re-evaluate VexFlow when
+  rhythmic values, beams, key signatures, or note entry are needed
 
 Until the rubrics arrive, every design decision keeps these fits in mind — see the
 exercise contract and functional-core rules in [ARCHITECTURE.md](ARCHITECTURE.md).
