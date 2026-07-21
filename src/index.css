@@ -609,7 +609,15 @@ input[type='range'] {
   margin: 6px 0 4px;
 }
 
-.octave-controls {
+.staff-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.octave-controls,
+.key-controls {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -617,7 +625,8 @@ input[type='range'] {
   flex-shrink: 0;
 }
 
-.octave-controls button {
+.octave-controls button,
+.key-controls button {
   background: var(--surface-hover);
   border: 1px solid var(--border);
   color: var(--text);
@@ -629,15 +638,23 @@ input[type='range'] {
   cursor: pointer;
 }
 
-.octave-controls button:disabled {
+.octave-controls button:disabled,
+.key-controls button:disabled {
   opacity: 0.35;
   cursor: default;
 }
 
-.octave-controls span {
+.octave-controls span,
+.key-controls span {
   color: var(--text-dim);
   font-size: 0.72rem;
   text-align: center;
+}
+
+.key-controls span {
+  color: var(--text);
+  font-weight: 600;
+  min-width: 26px;
 }
 
 /* Notation staff */

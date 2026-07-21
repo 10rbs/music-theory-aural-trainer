@@ -17,10 +17,15 @@ export const THEME_CACHE_KEY = 'aural-trainer:theme'
 /** What the daily-practice cards show. Stored under the `practiceDisplay` setting. */
 export interface PracticeDisplay {
   notation: boolean
+  keySignature: boolean
   noteNames: boolean
 }
 
-export const DEFAULT_PRACTICE_DISPLAY: PracticeDisplay = { notation: true, noteNames: true }
+export const DEFAULT_PRACTICE_DISPLAY: PracticeDisplay = {
+  notation: true,
+  keySignature: true,
+  noteNames: true,
+}
 
 const CLEF_LABELS: Record<Clef, string> = {
   treble: 'Treble',
@@ -59,7 +64,7 @@ export function SettingsWidget() {
     void store.getSetting<string[]>('practiceScales', [...ALL_SCALE_TYPES]).then(setScaleTypes)
     void store
       .getSetting<PracticeDisplay>('practiceDisplay', DEFAULT_PRACTICE_DISPLAY)
-      .then(setDisplay)
+      .then((d) => setDisplay({ ...DEFAULT_PRACTICE_DISPLAY, ...d }))
   }, [store])
 
   const changeClef = (value: Clef) => {
@@ -138,6 +143,15 @@ export function SettingsWidget() {
               onChange={() => toggleDisplay('notation')}
             />
             Notation
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={display.keySignature}
+              onChange={() => toggleDisplay('keySignature')}
+              disabled={!display.notation}
+            />
+            Key signature
           </label>
           <label>
             <input

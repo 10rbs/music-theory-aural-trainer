@@ -12,6 +12,7 @@ import {
   tonicPc,
   type Tonic,
 } from './theory/keys'
+import { P8, times, transposeSpelled } from './theory/transpose'
 import { type Clef } from './notation/staff'
 import { SCALES, type Scale } from './theory/scales'
 
@@ -23,9 +24,18 @@ export interface SpelledNote {
 }
 
 export interface AssignmentItem {
-  /** Stable id for completion tracking, e.g. "major:B♭". */
+  /** Stable id for completion tracking, e.g. "major:B♭". Survives octave and
+   *  key changes so a slot stays the same slot however the player transposes it. */
   id: string
+  /** Which daily slot this is: "major" | "minor" | "mode". */
+  kind: string
   title: string // "B♭ Major"
+  /** The scale-type label used in the title, e.g. "Major", "Harmonic Minor". */
+  label: string
+  /** The key this run is currently spelled in — moves when the key button does. */
+  tonic: Tonic
+  /** The scale type — kept so the run can be re-spelled in another key. */
+  scale: Scale
   notes: string[] // spelled scale degrees
   /** MIDI numbers, ascending one octave from a comfortable register. */
   midi: number[]
@@ -74,9 +84,14 @@ function rootMidi(tonic: Tonic, clef: Clef): number {
 function item(kind: string, tonic: Tonic, s: Scale, clef: Clef, label?: string): AssignmentItem {
   const root = rootMidi(tonic, clef)
   const degrees = spellScaleDegrees(tonic, s.intervals)
+  const displayLabel = label ?? s.name
   return {
     id: `${kind}:${tonicName(tonic)}`,
-    title: `${tonicName(tonic)} ${label ?? s.name}`,
+    kind,
+    title: `${tonicName(tonic)} ${displayLabel}`,
+    label: displayLabel,
+    tonic,
+    scale: s,
     notes: spellScale(tonic, s.intervals),
     midi: s.intervals.map((st) => root + st),
     // the octave entry (i = 7) reuses the tonic's spelling
@@ -85,17 +100,39 @@ function item(kind: string, tonic: Tonic, s: Scale, clef: Clef, label?: string):
 }
 
 /**
- * Shift an assignment's register by whole octaves — notation and playback
- * move together. Spelling, id, and title are untouched.
+ * Shift an assignment's register by whole octaves — notation and playback move
+ * together. This is octave displacement, the third transposition operation:
+ * the spelling (letter + accidental) is invariant, only the octave moves.
  */
 export function shiftOctaves(item: AssignmentItem, octaves: number): AssignmentItem {
   if (octaves === 0) return item
-  const d = octaves * 12
+  const iv = times(P8, octaves)
   return {
     ...item,
-    midi: item.midi.map((m) => m + d),
-    spelled: item.spelled.map((n) => ({ ...n, midi: n.midi + d })),
+    midi: item.midi.map((m) => m + iv.chromatic),
+    spelled: item.spelled.map((n) => transposeSpelled(n, iv)),
   }
+}
+
+/** Circle-of-fifths key list a slot's key button steps through. */
+const KEY_LIST: Record<string, readonly Tonic[]> = {
+  major: MAJOR_KEYS,
+  mode: MAJOR_KEYS,
+  minor: MINOR_KEYS,
+}
+
+/**
+ * Re-spell a scale in another key, `offset` steps around its slot's key list
+ * (each step ≈ a fifth = one more/less sharp or flat). The register is
+ * re-anchored to the clef, so only the key changes — id and slot are kept so
+ * completion tracking is unaffected. Wraps through all twelve practical keys.
+ */
+export function rekeyAssignment(base: AssignmentItem, offset: number, clef: Clef): AssignmentItem {
+  if (offset === 0) return base
+  const keys = KEY_LIST[base.kind] ?? MAJOR_KEYS
+  const i = keys.findIndex((k) => k.letter === base.tonic.letter && k.alter === base.tonic.alter)
+  const tonic = keys[mod((i < 0 ? 0 : i) + offset, keys.length)]
+  return { ...item(base.kind, tonic, base.scale, clef, base.label), id: base.id }
 }
 
 /** Display name for a scale type — drops the parenthesized mode aliases. */

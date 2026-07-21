@@ -3,8 +3,8 @@
 // right (F# major gets E#, A harmonic minor gets G#, never enharmonic slop).
 // Prerequisite for written-theory drills (M5+).
 
-const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
-const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+export const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
+export const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
 
 export interface Tonic {
   letter: (typeof LETTERS)[number]
