@@ -20,7 +20,7 @@ const PAD = 6
 const HEAD_RX = 6
 const HEAD_RY = 4.2
 const STEM_DX = 5 // stem offset from head center
-const TS_X = 34 // time-signature x
+const TS_X = 48 // time-signature x — clear of the clef (incl. the bass-clef dots)
 
 export function RhythmStaff({
   events,
@@ -56,7 +56,7 @@ export function RhythmStaff({
     <svg
       className="rhythm-staff"
       viewBox={`0 0 ${width} ${height}`}
-      style={{ aspectRatio: `${width} / ${height}` }}
+      style={{ width: `${width}px`, maxWidth: '100%' }}
       role="img"
       aria-label={`${label}, ${clef} clef, ${meter.beats}/${meter.unit}`}
     >

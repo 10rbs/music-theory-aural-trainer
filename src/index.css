@@ -708,8 +708,7 @@ input[type='range'] {
 
 /* Notation staff (shared by ScaleStaff + RhythmStaff) */
 
-.scale-staff,
-.rhythm-staff {
+.scale-staff {
   display: block;
   flex: 1;
   min-width: 0;
@@ -717,8 +716,13 @@ input[type='range'] {
   margin: 0;
 }
 
+/* Rhythm staves render at natural size (consistent note size across exercises),
+   shrinking only on narrow screens — the width comes from an inline style. */
 .rhythm-staff {
-  max-width: 460px;
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
 }
 
 :is(.scale-staff, .rhythm-staff) .staff-lines line {

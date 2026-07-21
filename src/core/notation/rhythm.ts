@@ -68,7 +68,7 @@ export interface RhythmLayout {
 const EPS = 1e-6
 
 // horizontal spacing (px)
-const LEFT_PAD = 56 // clef + time signature
+const LEFT_PAD = 62 // clef + time signature, then the first note
 const ADVANCE: Record<number, number> = { 1: 58, 2: 42, 4: 28, 8: 17, 16: 12 }
 const DOT_EXTRA = 6
 const BARLINE_GAP = 12
