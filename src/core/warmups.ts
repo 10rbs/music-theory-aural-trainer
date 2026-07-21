@@ -17,8 +17,9 @@ import { transposeSpelled, type Interval } from './theory/transpose'
 import { melodic, sustained, type PlaybackSpec } from './playback/spec'
 import { rootMidi } from './register'
 import { type Clef } from './notation/staff'
+import { type Meter, type RhythmEvent } from './notation/rhythm'
 
-export type WarmupCategory = 'long-tones' | 'lip-flexibility' | 'arpeggios'
+export type WarmupCategory = 'long-tones' | 'lip-flexibility' | 'arpeggios' | 'articulation'
 
 export const WARMUP_CATEGORIES: { id: WarmupCategory; label: string; blurb: string }[] = [
   {
@@ -35,6 +36,11 @@ export const WARMUP_CATEGORIES: { id: WarmupCategory; label: string; blurb: stri
     id: 'arpeggios',
     label: 'Arpeggios',
     blurb: 'Broken chords, ascending and descending. Use ♯/♭ to take each one through every key.',
+  },
+  {
+    id: 'articulation',
+    label: 'Articulation',
+    blurb: 'Tonguing patterns — attack each note cleanly, keep the air steady behind the tongue.',
   },
 ]
 
@@ -62,6 +68,8 @@ export interface WarmupExercise {
   tonic?: Tonic
   /** chord short-name, so a key change can rebuild the arpeggio */
   chordShort?: string
+  /** rhythmic notation (articulation) — rendered by RhythmStaff instead of ScaleStaff */
+  rhythm?: { events: RhythmEvent[]; meter: Meter }
   /** present on curated (Arban) items */
   source?: WarmupSource
 }
@@ -199,6 +207,55 @@ function slurPattern(
   }
 }
 
+// ── Articulation ────────────────────────────────────────────────────────────
+
+const FOUR_FOUR: Meter = { beats: 4, unit: 4 }
+
+/** C-major scale notes at the given degree indices (0..7), in the clef register. */
+function scaleNotes(clef: Clef, indices: readonly number[]): SpelledNote[] {
+  const base = rootMidi(C, clef)
+  const degs = spellScaleDegrees(C, MAJOR_INTERVALS)
+  return indices.map((i) => ({ ...degs[i % 7], midi: base + MAJOR_INTERVALS[i] }))
+}
+
+/** Build a PlaybackSpec from rhythm events — rests advance time but make no sound. */
+function rhythmPlayback(events: readonly RhythmEvent[], bpm: number): PlaybackSpec {
+  const evs = []
+  let start = 0
+  for (const e of events) {
+    if (e.note) evs.push({ midi: [e.note.midi], startBeat: start, durationBeats: e.beats })
+    start += e.beats
+  }
+  return { bpm, events: evs }
+}
+
+function articulation(
+  id: string,
+  title: string,
+  notes: SpelledNote[],
+  beats: readonly number[],
+  bpm: number,
+  instruction: string,
+  source?: WarmupSource,
+): WarmupExercise {
+  const events: RhythmEvent[] = notes.map((n, i) => ({ note: n, beats: beats[i] }))
+  return {
+    id,
+    category: 'articulation',
+    title,
+    instruction,
+    spelled: notes,
+    midi: notes.map((n) => n.midi),
+    playback: rhythmPlayback(events, bpm),
+    rhythm: { events, meter: FOUR_FOUR },
+    transposable: 'octave',
+    source,
+  }
+}
+
+const OCTAVE_UP = [0, 1, 2, 3, 4, 5, 6, 7] as const
+const eighths = (n: number) => Array(n).fill(0.5) as number[]
+
 // ── Library ─────────────────────────────────────────────────────────────────
 
 /** The full warm-up library, grouped by category, in the given clef register. */
@@ -218,6 +275,33 @@ export function warmupLibrary(clef: Clef): Record<WarmupCategory, WarmupExercise
       arpeggio(C, chord('min'), clef),
       arpeggio(C, chord('dom7'), clef),
       arbanArpeggio(clef),
+    ],
+    articulation: [
+      articulation(
+        'artic:single',
+        'Single tonguing',
+        scaleNotes(clef, OCTAVE_UP),
+        eighths(8),
+        100,
+        'Tongue each note evenly — Ta, Ta, Ta. Keep the air steady behind the tongue.',
+      ),
+      articulation(
+        'artic:dotted',
+        'Dotted articulation',
+        scaleNotes(clef, OCTAVE_UP),
+        [0.75, 0.25, 0.75, 0.25, 0.75, 0.25, 0.75, 0.25],
+        88,
+        'Long–short: a dotted eighth then a sixteenth on every beat.',
+      ),
+      articulation(
+        'artic:arban',
+        'Arban — sixteenth-note study',
+        scaleNotes(clef, [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0]),
+        Array(16).fill(0.25),
+        84,
+        'Even, light single tongue up and back down — stay relaxed at speed.',
+        ARBAN,
+      ),
     ],
   }
 }
@@ -248,6 +332,12 @@ export function shiftWarmup(ex: WarmupExercise, octaves: number): WarmupExercise
     playback: {
       ...ex.playback,
       events: ex.playback.events.map((e) => ({ ...e, midi: e.midi.map((m) => m + d) })),
+    },
+    rhythm: ex.rhythm && {
+      ...ex.rhythm,
+      events: ex.rhythm.events.map((e) =>
+        e.note ? { ...e, note: { ...e.note, midi: e.note.midi + d } } : e,
+      ),
     },
   }
 }

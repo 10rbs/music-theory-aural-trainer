@@ -66,6 +66,38 @@ describe('rekeyWarmup — arpeggios through the keys', () => {
   })
 })
 
+describe('articulation — rhythmic exercises', () => {
+  test('single tonguing is eight eighth notes filling one 4/4 measure', () => {
+    const ex = find('treble', 'articulation', 'artic:single')
+    expect(ex.rhythm).toBeDefined()
+    expect(ex.rhythm!.meter).toEqual({ beats: 4, unit: 4 })
+    expect(ex.rhythm!.events).toHaveLength(ex.spelled.length)
+    expect(ex.rhythm!.events.map((e) => e.beats)).toEqual(Array(8).fill(0.5))
+    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(4) // one measure
+  })
+
+  test('dotted pattern alternates dotted-eighth and sixteenth', () => {
+    const ex = find('treble', 'articulation', 'artic:dotted')
+    expect(ex.rhythm!.events.map((e) => e.beats)).toEqual([0.75, 0.25, 0.75, 0.25, 0.75, 0.25, 0.75, 0.25])
+  })
+
+  test('the Arban study is sixteen sixteenths and carries provenance', () => {
+    const ex = find('treble', 'articulation', 'artic:arban')
+    expect(ex.rhythm!.events).toHaveLength(16)
+    expect(ex.rhythm!.events.every((e) => e.beats === 0.25)).toBe(true)
+    expect(ex.source?.year).toBe(1864)
+  })
+
+  test('shiftWarmup moves the rhythm notes together with midi', () => {
+    const ex = find('treble', 'articulation', 'artic:single')
+    const up = shiftWarmup(ex, 1)
+    expect(up.rhythm!.events.map((e) => e.note!.midi)).toEqual(
+      ex.rhythm!.events.map((e) => e.note!.midi + 12),
+    )
+    expect(up.midi).toEqual(ex.midi.map((m) => m + 12))
+  })
+})
+
 describe('lip flexibility — harmonic-series partials over B♭', () => {
   test('two-partial slur is fundamental, octave, fundamental', () => {
     const ex = find('treble', 'lip-flexibility', 'slur:121')
