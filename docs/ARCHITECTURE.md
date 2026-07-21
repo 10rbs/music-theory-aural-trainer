@@ -35,13 +35,15 @@ Rules:
 ```
 src/
   core/
-    theory/        notes, intervals, chords, scales, keys (M4)
+    theory/        notes, intervals, chords, scales, keys (M4),
+                   transpose.ts (diatonic transposition, MusicXML semantics) (M4.7)
     exercises/     exercise contract, registry, per-drill generators+graders, seeded RNG
     playback/      PlaybackSpec types + builders (notes+beats+bpm → timed events)
     pitch/         detect.ts (autocorrelation/MPM on Float32Array), cents.ts,
                    history.ts (pitch-history graph math)                        (M3/M4.5)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
-    notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6)
+    notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6),
+                   key-signature.ts (signature accidentals + inline suppression) (M4.7)
     streak.ts      pure streak logic, dates passed in
     assignments.ts date-seeded daily scale assignments; register follows the
                    chosen clef, eligible scale types are a setting             (M4/M4.6)

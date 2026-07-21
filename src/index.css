@@ -599,14 +599,23 @@ input[type='range'] {
   color: var(--text);
 }
 
-/* Staff + octave shift (vertical +/− column left of the notation, so the
-   buttons stay put while the staff grows/shrinks with ledger lines) */
+/* Staff notation with its controls: the key stepper (♭ · key · ♯) sits in a
+   row on top of the staff; the octave +/− stays a vertical column to the left,
+   so those buttons stay put while the staff grows/shrinks with ledger lines.
+   The block is capped to the staff's width so the key row centers over it. */
+
+.staff-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 366px;
+  margin: 6px 0 4px;
+}
 
 .staff-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin: 6px 0 4px;
 }
 
 .octave-controls {
@@ -617,7 +626,18 @@ input[type='range'] {
   flex-shrink: 0;
 }
 
-.octave-controls button {
+.key-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* clear the octave column (26px + 10px gap) so the row centers over the staff */
+  padding-left: 36px;
+}
+
+.octave-controls button,
+.key-controls button {
   background: var(--surface-hover);
   border: 1px solid var(--border);
   color: var(--text);
@@ -629,7 +649,8 @@ input[type='range'] {
   cursor: pointer;
 }
 
-.octave-controls button:disabled {
+.octave-controls button:disabled,
+.key-controls button:disabled {
   opacity: 0.35;
   cursor: default;
 }
@@ -637,6 +658,14 @@ input[type='range'] {
 .octave-controls span {
   color: var(--text-dim);
   font-size: 0.72rem;
+  text-align: center;
+}
+
+.key-controls span {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 48px;
   text-align: center;
 }
 

@@ -2,10 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ALL_SCALE_TYPES,
   dailyAssignment,
+  rekeyAssignment,
   shiftOctaves,
   type AssignmentItem,
 } from '../../core/assignments'
 import { type Clef } from '../../core/notation/staff'
+import { keySignature } from '../../core/notation/key-signature'
+import { tonicName } from '../../core/theory/keys'
 import { melodic } from '../../core/playback/spec'
 import { toLocalDateStr } from '../../core/streak'
 import { playSpec } from '../../shell/audio/synth'
@@ -26,6 +29,10 @@ const MAX_MIDI = 108
 
 /** Persisted octave shifts, keyed by slot kind ("major" | "minor" | "mode"). */
 type OctaveShifts = Record<string, number>
+/** Persisted key offsets (circle-of-fifths steps), keyed by slot kind. */
+type KeyShifts = Record<string, number>
+
+const wrap12 = (n: number) => ((n % 12) + 12) % 12
 
 export function PracticeView() {
   const store = useStore()
@@ -34,6 +41,7 @@ export function PracticeView() {
   const [clef, setClef] = useState<Clef>('treble')
   const [display, setDisplay] = useState<PracticeDisplay>(DEFAULT_PRACTICE_DISPLAY)
   const [octaves, setOctaves] = useState<OctaveShifts>({})
+  const [keys, setKeys] = useState<KeyShifts>({})
   const [done, setDone] = useState<Set<string>>(new Set())
   const [bpm, setBpm] = useState(100)
 
@@ -51,8 +59,11 @@ export function PracticeView() {
       void store.getSetting<Clef>('clef', 'treble').then(setClef)
       void store
         .getSetting<PracticeDisplay>('practiceDisplay', DEFAULT_PRACTICE_DISPLAY)
-        .then(setDisplay)
+        // merge defaults so keys added in later versions (e.g. keySignature)
+        // default correctly for settings saved before they existed
+        .then((d) => setDisplay({ ...DEFAULT_PRACTICE_DISPLAY, ...d }))
       void store.getSetting<OctaveShifts>('practiceOctaves', {}).then(setOctaves)
+      void store.getSetting<KeyShifts>('practiceKeys', {}).then(setKeys)
     }
     load()
     settingsEvents.addEventListener('settings', load)
@@ -71,6 +82,15 @@ export function PracticeView() {
       void store.setSetting('practiceOctaves', next)
     },
     [octaves, store],
+  )
+
+  const setKey = useCallback(
+    (kind: string, n: number) => {
+      const next = { ...keys, [kind]: wrap12(n) }
+      setKeys(next)
+      void store.setSetting('practiceKeys', next)
+    },
+    [keys, store],
   )
 
   const play = (item: AssignmentItem) => {
@@ -93,7 +113,8 @@ export function PracticeView() {
         ts: now.getTime(),
         correct: true,
         score: 1,
-        detail: { item: item.id },
+        // record the key actually practiced, not just the slot's default
+        detail: { item: item.id, key: tonicName(item.tonic) },
       })
       .then(() => statsEvents.dispatchEvent(new Event('attempt')))
   }
@@ -124,39 +145,66 @@ export function PracticeView() {
       <div className="practice-list">
         {items.map((baseItem) => {
           const isDone = done.has(baseItem.id)
-          const kind = baseItem.id.split(':')[0]
+          const kind = baseItem.kind
+          const keyOffset = keys[kind] ?? 0
+          const keyed = rekeyAssignment(baseItem, keyOffset, clef)
           const rawShift = octaves[kind] ?? 0
-          // a persisted shift may be out of range for this clef/tonic — clamp
-          const shift = clampShift(baseItem, rawShift)
-          const item = shiftOctaves(baseItem, shift)
+          // a persisted shift may be out of range for this clef/key — clamp
+          const shift = clampShift(keyed, rawShift)
+          const item = shiftOctaves(keyed, shift)
           const canShiftDown = shift > -MAX_OCTAVE_SHIFT && item.midi[0] - 12 >= MIN_MIDI
           const canShiftUp = shift < MAX_OCTAVE_SHIFT && item.midi[7] + 12 <= MAX_MIDI
+          const sig = display.keySignature ? keySignature(item.tonic, item.scale) : undefined
           return (
             <div key={item.id} className={`practice-item${isDone ? ' done' : ''}`}>
               <div className="practice-info">
                 <h3>{item.title}</h3>
                 {display.notation && (
-                  <div className="staff-row">
-                    <div className="octave-controls" role="group" aria-label="Octave shift">
+                  <div className="staff-block">
+                    <div className="key-controls" role="group" aria-label="Key">
                       <button
-                        onClick={() => setShift(kind, shift + 1)}
-                        disabled={!canShiftUp}
-                        aria-label="Octave up"
+                        onClick={() => setKey(kind, keyOffset - 1)}
+                        aria-label="Key down (flatter)"
                       >
-                        +
+                        ♭
                       </button>
-                      <span aria-live="polite" title="Octave shift">
-                        {`${shift > 0 ? '+' : ''}${shift}`}
+                      <span aria-live="polite" title="Key">
+                        {tonicName(item.tonic)}
                       </span>
                       <button
-                        onClick={() => setShift(kind, shift - 1)}
-                        disabled={!canShiftDown}
-                        aria-label="Octave down"
+                        onClick={() => setKey(kind, keyOffset + 1)}
+                        aria-label="Key up (sharper)"
                       >
-                        −
+                        ♯
                       </button>
                     </div>
-                    <ScaleStaff spelled={item.spelled} clef={clef} label={item.title} />
+                    <div className="staff-row">
+                      <div className="octave-controls" role="group" aria-label="Octave shift">
+                        <button
+                          onClick={() => setShift(kind, shift + 1)}
+                          disabled={!canShiftUp}
+                          aria-label="Octave up"
+                        >
+                          +
+                        </button>
+                        <span aria-live="polite" title="Octave shift">
+                          {`${shift > 0 ? '+' : ''}${shift}`}
+                        </span>
+                        <button
+                          onClick={() => setShift(kind, shift - 1)}
+                          disabled={!canShiftDown}
+                          aria-label="Octave down"
+                        >
+                          −
+                        </button>
+                      </div>
+                      <ScaleStaff
+                        spelled={item.spelled}
+                        clef={clef}
+                        label={item.title}
+                        keySig={sig}
+                      />
+                    </div>
                   </div>
                 )}
                 {display.noteNames && <p className="practice-notes">{item.notes.join(' ')}</p>}
@@ -180,8 +228,9 @@ export function PracticeView() {
 
       <p className="tagline practice-hint">
         Play each scale on your instrument (ascending and descending), using Listen as a
-        reference. Completing a scale counts toward your daily streak. Customize what these
-        cards show in ⚙ Settings.
+        reference. Use the ♯/♭ buttons to practice a scale in any key and +/− to shift octaves.
+        Completing a scale counts toward your daily streak. Customize what these cards show in ⚙
+        Settings.
       </p>
     </section>
   )

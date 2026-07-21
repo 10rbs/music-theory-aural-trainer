@@ -13,6 +13,7 @@ Status legend: ✅ done · 🚧 in progress · ⬜ planned
 | **M4** | ✅ | Scale practice + dashboard | Date-keyed daily scale rotation, reference playback at tempo, proper note spelling (`keys.ts`), practice card on home, export/import JSON backup |
 | **M4.5** | ✅ | TE-style header widgets | Tuner + metronome recast as always-available header drop-widgets (pill toggles the tool, chevron drops the panel; keep running across navigation). Tuner gains a pitch-history graph and a drone note circle (octave 2–5, A4-aware). Dashboard is the main page; `/tuner` + `/metronome` routes removed. Metronome + drone settings persisted |
 | **M4.6** | ✅ | Practice notation + settings | Daily scales rendered as staff notation (hand-rolled SVG, pure layout math in `core/notation/` — see `docs/decisions/0001`), header settings menu with practice customization (scale types, notation/note-name visibility, persisted per-slot octave shift), clef choice (treble/alto/tenor/bass — clef also sets the practice register; bass sits in trombone range) and light/dark theme (light default) |
+| **M4.7** | ✅ | Transposition + key signatures | Diatonic transposition primitive (`core/theory/transpose.ts`, MusicXML `<transpose>` semantics — the foundation for instrument transposition and transposable etudes; octave shift now routes through it). Key signatures rendered on the practice staves (`core/notation/key-signature.ts`): sharps/flats drawn after the clef with inline accidentals suppressed, harmonic/melodic minor keeping the natural-minor signature, modes taking the parent signature. Per-slot key button (♯/♭) steps a scale through all twelve practical keys with the signature following; persisted like the octave shift. Key-signature display is a settings toggle (default on). Still hand-rolled, no notation library — see `docs/decisions/0002` |
 | **M5+** | ⬜ | Course-qualification features (rubric-gated) | See below |
 
 ## M5+ — waiting on official rubrics
@@ -26,9 +27,13 @@ provided at a future date. When they arrive, they unlock:
 - **Written theory quizzes** — key signatures, scale/chord spelling (builds on `keys.ts`)
 - **Curriculum / qualification tracking** — rubric-driven practice paths and
   progress toward qual dates
-- **Richer notation rendering** — M4.6 shipped hand-rolled SVG for scale runs
-  (`docs/decisions/0001-notation-rendering.md`); re-evaluate VexFlow when
-  rhythmic values, beams, key signatures, or note entry are needed
+- **Richer notation rendering** — M4.6/M4.7 shipped hand-rolled SVG for scale
+  runs, key signatures, and diatonic transposition
+  (`docs/decisions/0001-notation-rendering.md`, `0002-key-signatures-and-transposition.md`);
+  re-evaluate VexFlow/OSMD when rhythmic values, stems, beams, or note entry are
+  needed — the same point transposable **etudes** (arbitrary spelled melodies,
+  which `core/theory/transpose.ts` already handles the pitch math for) become
+  feasible
 
 Until the rubrics arrive, every design decision keeps these fits in mind — see the
 exercise contract and functional-core rules in [ARCHITECTURE.md](ARCHITECTURE.md).

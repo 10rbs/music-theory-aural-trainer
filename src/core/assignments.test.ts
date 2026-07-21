@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { ALL_SCALE_TYPES, dailyAssignment, dayNumber, shiftOctaves } from './assignments'
+import {
+  ALL_SCALE_TYPES,
+  dailyAssignment,
+  dayNumber,
+  rekeyAssignment,
+  shiftOctaves,
+} from './assignments'
+import { MAJOR_KEYS, MINOR_KEYS, tonicName } from './theory/keys'
 
 describe('dayNumber', () => {
   test('epoch day and rollover', () => {
@@ -136,6 +143,47 @@ describe('shiftOctaves', () => {
   test('zero shift returns the item unchanged', () => {
     const [item] = dailyAssignment('2026-07-19')
     expect(shiftOctaves(item, 0)).toBe(item)
+  })
+})
+
+describe('rekeyAssignment', () => {
+  test('offset 0 is identity', () => {
+    const [maj] = dailyAssignment('2026-07-19')
+    expect(rekeyAssignment(maj, 0, 'treble')).toBe(maj)
+  })
+
+  test('steps through the major key list, changing the key but not id or slot', () => {
+    const [maj] = dailyAssignment('2026-07-19')
+    const i = MAJOR_KEYS.findIndex((k) => k.letter === maj.tonic.letter && k.alter === maj.tonic.alter)
+    const next = rekeyAssignment(maj, 1, 'treble')
+    const expected = MAJOR_KEYS[(i + 1) % 12]
+    expect(next.tonic).toEqual(expected)
+    expect(next.title).toBe(`${tonicName(expected)} ${maj.label}`)
+    expect(next.notes).not.toEqual(maj.notes) // really a different key
+    expect(next.id).toBe(maj.id) // …but the same slot for completion tracking
+    expect(next.kind).toBe('major')
+  })
+
+  test('minor slot steps through the minor key list', () => {
+    const minor = dailyAssignment('2026-07-19')[1]
+    const i = MINOR_KEYS.findIndex((k) => k.letter === minor.tonic.letter && k.alter === minor.tonic.alter)
+    expect(rekeyAssignment(minor, 1, 'treble').tonic).toEqual(MINOR_KEYS[(i + 1) % 12])
+  })
+
+  test('wraps: twelve steps returns to the same key', () => {
+    const [maj] = dailyAssignment('2026-07-19')
+    const round = rekeyAssignment(maj, 12, 'treble')
+    expect(round.tonic).toEqual(maj.tonic)
+    expect(round.notes).toEqual(maj.notes)
+  })
+
+  test('re-anchors every key into the clef register window (bass)', () => {
+    const [maj] = dailyAssignment('2026-07-19', ALL_SCALE_TYPES, 'bass')
+    for (let o = 0; o < 12; o++) {
+      const it = rekeyAssignment(maj, o, 'bass')
+      expect(it.midi[0]).toBeGreaterThanOrEqual(46)
+      expect(it.midi[0]).toBeLessThanOrEqual(57)
+    }
   })
 })
 
