@@ -18,7 +18,10 @@ Whole → sixteenth notes, dotted notes, rests, time signatures (4/4, 3/4, 2/4,
 6/8), single voice, **with beaming** (primary beams per beat group, full
 secondary beams for sixteenth runs, and stub secondary beams for a lone beamed
 sixteenth — e.g. dotted-eighth + sixteenth). Stem direction follows the note
-furthest from the middle line.
+furthest from the middle line. **Multi-system wrapping:** a passage longer than
+one line packs whole measures onto a staff line until it fills, then wraps to the
+next line (clef on every line, time signature on the first), so longer passages
+read at a natural note size instead of shrinking.
 
 **Deferred:** triplets/tuplets, ties across bar lines, multi-voice, and MusicXML
 ingestion.

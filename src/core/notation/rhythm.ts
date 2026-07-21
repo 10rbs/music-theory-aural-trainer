@@ -3,6 +3,11 @@
 // (staff steps vertically, px x horizontally, same split as staff.ts +
 // ScaleStaff), and the SVG renderer in features/ maps steps to y and draws it.
 //
+// A passage is laid out as one or more SYSTEMS (staff lines): whole measures are
+// packed onto a line until it fills, then the next measures wrap to a new line —
+// so longer passages read at a natural note size instead of shrinking. Each
+// system carries the clef; the time signature is on the first line only.
+//
 // Durations are in quarter-note BEATS, the same unit as PlaybackSpec, so an
 // exercise's playback and its notation come from one source. Bounded v1: whole
 // through sixteenth + dotted, meters 4/4·3/4·2/4·6/8, beaming within a beat
@@ -40,7 +45,7 @@ export interface RhythmGlyph {
   /** flags when the note stands alone (not beamed): 1 for eighth, 2 for sixteenth */
   flags: number
   beamId: number | null
-  /** horizontal center, px */
+  /** horizontal center, px, relative to this system's left edge */
   x: number
   ledgerSteps: number[]
 }
@@ -56,11 +61,20 @@ export interface Beam {
   secondary: [number, number][]
 }
 
-export interface RhythmLayout {
+/** One staff line of a passage. */
+export interface RhythmSystem {
   glyphs: RhythmGlyph[]
   beams: Beam[]
-  /** x positions of internal bar lines (not the closing one at `width`) */
+  /** x of internal bar lines (between measures); the closing bar is at `width` */
   barlines: number[]
+  width: number
+  /** the time signature is drawn on the first system only */
+  showTimeSig: boolean
+}
+
+export interface RhythmLayout {
+  systems: RhythmSystem[]
+  /** widest system, px */
   width: number
   meter: Meter
 }
@@ -69,7 +83,9 @@ const EPS = 1e-6
 
 // horizontal spacing (px). Heads are ~12px wide, so advances stay well clear of
 // that to avoid a cramped, noisy look — even beamed sixteenths keep a gap.
-const LEFT_PAD = 62 // clef + time signature, then the first note
+const CLEF_PAD = 44 // clef area at the start of every system
+const TIMESIG_PAD = 18 // extra room for the time signature (first system only)
+const TARGET_WIDTH = 340 // wrap to a new system past this
 const ADVANCE: Record<number, number> = { 1: 62, 2: 46, 4: 32, 8: 22, 16: 17 }
 const DOT_EXTRA = 7
 const BARLINE_GAP = 12
@@ -79,6 +95,8 @@ const TRAIL_PAD = 10
 const MIDDLE = 4 // middle staff line
 const STEM_STEPS = 6 // ~3 line-spaces
 const SECONDARY_OFFSET = 1.6
+
+const systemLeft = (first: boolean) => CLEF_PAD + (first ? TIMESIG_PAD : 0)
 
 const VALUE_TABLE: readonly [number, number, 0 | 1][] = [
   [4, 1, 0],
@@ -106,6 +124,13 @@ export function measureBeats(meter: Meter): number {
 const isBeamable = (g: { isRest: boolean; value: number }) => !g.isRest && g.value >= 8
 const flagsFor = (value: number) => (value === 16 ? 2 : value === 8 ? 1 : 0)
 
+interface MeasureLayout {
+  glyphs: RhythmGlyph[]
+  beams: Beam[]
+  /** total advance, px (x of the point just past the last note) */
+  width: number
+}
+
 export function rhythmLayout(
   events: readonly RhythmEvent[],
   meter: Meter,
@@ -115,25 +140,87 @@ export function rhythmLayout(
   const compound = meter.unit === 8 && meter.beats % 3 === 0
   const groupSize = compound ? 1.5 : 1
 
-  const glyphs: RhythmGlyph[] = []
-  const groupKey: number[] = [] // beat-group id per glyph, for beaming
-  const barlines: number[] = []
-
-  let x = LEFT_PAD
-  let pos = 0 // cumulative quarter-beats
-  let measure = 0
-
+  // split events into whole measures (v1 assumes clean division — no ties)
+  const measures: RhythmEvent[][] = []
+  let cur: RhythmEvent[] = []
+  let acc = 0
   for (const ev of events) {
-    const nv = beatsToValue(ev.beats)
-    const m = Math.floor(pos / mBeats + EPS)
-    if (m > measure) {
-      barlines.push(x - BARLINE_GAP / 2)
-      x += BARLINE_GAP
-      measure = m
+    cur.push(ev)
+    acc += ev.beats
+    if (acc >= mBeats - EPS) {
+      measures.push(cur)
+      cur = []
+      acc = 0
     }
-    const inMeasure = pos - m * mBeats
-    const group = m * 1000 + Math.floor(inMeasure / groupSize + EPS)
+  }
+  if (cur.length) measures.push(cur)
 
+  // lay each measure out locally (x from 0); beam ids stay unique across the piece
+  let beamBase = 0
+  const measureLayouts = measures.map((evs) => {
+    const ml = layoutMeasure(evs, groupSize, clef, beamBase)
+    beamBase += ml.beams.length
+    return ml
+  })
+
+  // pack measures onto systems that fit TARGET_WIDTH (at least one measure each)
+  const systems: RhythmSystem[] = []
+  let bucket: MeasureLayout[] = []
+  const flush = () => {
+    if (!bucket.length) return
+    const first = systems.length === 0
+    let x = systemLeft(first)
+    const glyphs: RhythmGlyph[] = []
+    const beams: Beam[] = []
+    const barlines: number[] = []
+    bucket.forEach((m, mi) => {
+      const dx = x
+      for (const g of m.glyphs) glyphs.push({ ...g, x: g.x + dx })
+      for (const b of m.beams) {
+        beams.push({
+          ...b,
+          x0: b.x0 + dx,
+          x1: b.x1 + dx,
+          secondary: b.secondary.map(([a, c]) => [a + dx, c + dx] as [number, number]),
+        })
+      }
+      x += m.width
+      if (mi < bucket.length - 1) {
+        barlines.push(x + BARLINE_GAP / 2)
+        x += BARLINE_GAP
+      }
+    })
+    systems.push({ glyphs, beams, barlines, width: x + TRAIL_PAD, showTimeSig: first })
+    bucket = []
+  }
+
+  for (const m of measureLayouts) {
+    const left = systemLeft(systems.length === 0)
+    const content = bucket.reduce((s, b) => s + b.width, 0) + Math.max(0, bucket.length - 1) * BARLINE_GAP
+    const added = (bucket.length ? BARLINE_GAP : 0) + m.width
+    if (bucket.length && left + content + added + TRAIL_PAD > TARGET_WIDTH) flush()
+    bucket.push(m)
+  }
+  flush()
+
+  const width = Math.max(...systems.map((s) => s.width))
+  return { systems, width, meter }
+}
+
+/** Lay a single measure out with x starting at 0. */
+function layoutMeasure(
+  evs: readonly RhythmEvent[],
+  groupSize: number,
+  clef: Clef,
+  beamBase: number,
+): MeasureLayout {
+  const glyphs: RhythmGlyph[] = []
+  const groupKey: number[] = []
+  let x = 0
+  let pos = 0
+  for (const ev of evs) {
+    const nv = beatsToValue(ev.beats)
+    const group = Math.floor(pos / groupSize + EPS)
     let step = MIDDLE
     let alter = 0
     let ledgerSteps: number[] = []
@@ -143,14 +230,13 @@ export function rhythmLayout(
       alter = ev.note.alter
       ledgerSteps = sl.ledgerSteps
     }
-
     glyphs.push({
       isRest: !ev.note,
       step,
       alter,
       value: nv.value,
       dots: nv.dots,
-      stemUp: step < MIDDLE, // provisional; beams override
+      stemUp: step < MIDDLE,
       flags: 0,
       beamId: null,
       x,
@@ -160,25 +246,21 @@ export function rhythmLayout(
     x += ADVANCE[nv.value] + (nv.dots ? DOT_EXTRA : 0)
     pos += ev.beats
   }
-
-  const beams = assignBeams(glyphs, groupKey)
-
-  // notes not in a beam get flags and the single-note stem rule
+  const beams = assignBeams(glyphs, groupKey, beamBase)
   for (const g of glyphs) {
     if (g.beamId === null && !g.isRest) {
       g.flags = flagsFor(g.value)
       g.stemUp = g.step < MIDDLE
     }
   }
-
-  return { glyphs, beams, barlines, width: x + TRAIL_PAD, meter }
+  return { glyphs, beams, width: x }
 }
 
 /** Group consecutive beamable notes sharing a beat group into beams (≥2 notes). */
-function assignBeams(glyphs: RhythmGlyph[], groupKey: number[]): Beam[] {
+function assignBeams(glyphs: RhythmGlyph[], groupKey: number[], idBase: number): Beam[] {
   const beams: Beam[] = []
   let i = 0
-  let nextId = 0
+  let next = 0
   while (i < glyphs.length) {
     if (!isBeamable(glyphs[i])) {
       i++
@@ -188,7 +270,7 @@ function assignBeams(glyphs: RhythmGlyph[], groupKey: number[]): Beam[] {
     while (j < glyphs.length && isBeamable(glyphs[j]) && groupKey[j] === groupKey[i]) j++
     const run = glyphs.slice(i, j)
     if (run.length >= 2) {
-      const id = nextId++
+      const id = idBase + next++
       // stem direction: away from the note furthest from the middle line
       const extreme = run.reduce((a, b) => (Math.abs(b.step - MIDDLE) > Math.abs(a.step - MIDDLE) ? b : a))
       const stemUp = extreme.step < MIDDLE

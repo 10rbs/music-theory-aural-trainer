@@ -67,23 +67,26 @@ describe('rekeyWarmup — arpeggios through the keys', () => {
 })
 
 describe('articulation — rhythmic exercises', () => {
-  test('single tonguing is eight eighth notes filling one 4/4 measure', () => {
+  test('single tonguing is sixteen eighth notes filling two 4/4 measures', () => {
     const ex = find('treble', 'articulation', 'artic:single')
     expect(ex.rhythm).toBeDefined()
     expect(ex.rhythm!.meter).toEqual({ beats: 4, unit: 4 })
     expect(ex.rhythm!.events).toHaveLength(ex.spelled.length)
-    expect(ex.rhythm!.events.map((e) => e.beats)).toEqual(Array(8).fill(0.5))
-    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(4) // one measure
+    expect(ex.rhythm!.events.map((e) => e.beats)).toEqual(Array(16).fill(0.5))
+    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(8) // two measures
   })
 
-  test('dotted pattern alternates dotted-eighth and sixteenth', () => {
+  test('dotted pattern alternates dotted-eighth and sixteenth across two measures', () => {
     const ex = find('treble', 'articulation', 'artic:dotted')
-    expect(ex.rhythm!.events.map((e) => e.beats)).toEqual([0.75, 0.25, 0.75, 0.25, 0.75, 0.25, 0.75, 0.25])
+    expect(ex.rhythm!.events).toHaveLength(16)
+    expect(ex.rhythm!.events.map((e) => e.beats)).toEqual(
+      Array.from({ length: 8 }, () => [0.75, 0.25]).flat(),
+    )
   })
 
-  test('the Arban study is sixteen sixteenths and carries provenance', () => {
+  test('the Arban study is thirty-two sixteenths and carries provenance', () => {
     const ex = find('treble', 'articulation', 'artic:arban')
-    expect(ex.rhythm!.events).toHaveLength(16)
+    expect(ex.rhythm!.events).toHaveLength(32)
     expect(ex.rhythm!.events.every((e) => e.beats === 0.25)).toBe(true)
     expect(ex.source?.year).toBe(1864)
   })

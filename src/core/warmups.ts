@@ -253,8 +253,10 @@ function articulation(
   }
 }
 
-const OCTAVE_UP = [0, 1, 2, 3, 4, 5, 6, 7] as const
-const eighths = (n: number) => Array(n).fill(0.5) as number[]
+// ascending then descending one octave (16 scale-degree indices), the shape of
+// a two-measure tonguing passage
+const OCTAVE_UP_DOWN = [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0] as const
+const repeat = <T,>(xs: readonly T[], n: number): T[] => Array.from({ length: n }, () => xs).flat()
 
 // ── Library ─────────────────────────────────────────────────────────────────
 
@@ -280,24 +282,24 @@ export function warmupLibrary(clef: Clef): Record<WarmupCategory, WarmupExercise
       articulation(
         'artic:single',
         'Single tonguing',
-        scaleNotes(clef, OCTAVE_UP),
-        eighths(8),
+        scaleNotes(clef, OCTAVE_UP_DOWN),
+        repeat([0.5], 16), // sixteen eighths — two 4/4 measures
         100,
         'Tongue each note evenly — Ta, Ta, Ta. Keep the air steady behind the tongue.',
       ),
       articulation(
         'artic:dotted',
         'Dotted articulation',
-        scaleNotes(clef, OCTAVE_UP),
-        [0.75, 0.25, 0.75, 0.25, 0.75, 0.25, 0.75, 0.25],
+        scaleNotes(clef, OCTAVE_UP_DOWN),
+        repeat([0.75, 0.25], 8), // dotted-eighth + sixteenth on every beat, two measures
         88,
         'Long–short: a dotted eighth then a sixteenth on every beat.',
       ),
       articulation(
         'artic:arban',
         'Arban — sixteenth-note study',
-        scaleNotes(clef, [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0]),
-        Array(16).fill(0.25),
+        scaleNotes(clef, [...OCTAVE_UP_DOWN, ...OCTAVE_UP_DOWN]),
+        repeat([0.25], 32), // thirty-two sixteenths — two measures
         84,
         'Even, light single tongue up and back down — stay relaxed at speed.',
         ARBAN,
