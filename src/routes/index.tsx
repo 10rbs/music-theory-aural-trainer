@@ -17,6 +17,7 @@ function Home() {
   const [stats, setStats] = useState<Record<string, ExerciseStats>>({})
   const [practiceDone, setPracticeDone] = useState(0)
   const [practiceTotal, setPracticeTotal] = useState(() => dailyAssignment(today).length)
+  const [warmupDone, setWarmupDone] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -27,6 +28,9 @@ function Home() {
     })
     void store.getSetting<string[]>(`practice:${today}`, []).then((ids) => {
       if (!cancelled) setPracticeDone(ids.length)
+    })
+    void store.getSetting<string[]>(`warmup:${today}`, []).then((ids) => {
+      if (!cancelled) setWarmupDone(ids.length)
     })
     const loadTotal = () =>
       void store.getSetting<string[]>('practiceScales', [...ALL_SCALE_TYPES]).then((enabled) => {
@@ -52,6 +56,13 @@ function Home() {
             : practiceDone >= practiceTotal
               ? 'Complete — nice work! ✓'
               : `${practiceDone}/${practiceTotal} scales done today`}
+        </span>
+      </Link>
+      <Link to="/warmup" className="mode-card practice-card">
+        <h2>Warm-up</h2>
+        <p>Long tones, lip flexibility, and arpeggios — with Arban examples.</p>
+        <span className="mode-stat">
+          {warmupDone > 0 ? `${warmupDone} done today ✓` : 'Start your routine'}
         </span>
       </Link>
       <div className="mode-grid">

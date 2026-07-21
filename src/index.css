@@ -514,6 +514,43 @@ input[type='range'] {
   letter-spacing: 0.06em;
 }
 
+/* Warm-up section */
+
+.warmup-intro {
+  margin: 0 0 20px;
+}
+
+.warmup-category {
+  margin-bottom: 24px;
+}
+
+.warmup-category-title {
+  margin: 0 0 2px;
+  font-size: 1.05rem;
+}
+
+.warmup-blurb {
+  margin: 0 0 12px;
+}
+
+.warmup-title {
+  margin: 0 0 2px;
+  font-size: 0.98rem;
+}
+
+.warmup-source {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.warmup-instruction {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
 /* Settings menu (header widget) */
 
 .widget-panel.settings-panel {

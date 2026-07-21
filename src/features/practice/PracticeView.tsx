@@ -17,7 +17,7 @@ import {
   type PracticeDisplay,
 } from '../settings/SettingsWidget'
 import { settingsEvents, statsEvents, useStore } from '../stats/store-context'
-import { ScaleStaff } from './ScaleStaff'
+import { StaffWithControls } from './StaffWithControls'
 
 const TEMPI = [60, 80, 100, 120, 144]
 
@@ -160,52 +160,24 @@ export function PracticeView() {
               <div className="practice-info">
                 <h3>{item.title}</h3>
                 {display.notation && (
-                  <div className="staff-block">
-                    <div className="key-controls" role="group" aria-label="Key">
-                      <button
-                        onClick={() => setKey(kind, keyOffset - 1)}
-                        aria-label="Key down (flatter)"
-                      >
-                        ♭
-                      </button>
-                      <span aria-live="polite" title="Key">
-                        {tonicName(item.tonic)}
-                      </span>
-                      <button
-                        onClick={() => setKey(kind, keyOffset + 1)}
-                        aria-label="Key up (sharper)"
-                      >
-                        ♯
-                      </button>
-                    </div>
-                    <div className="staff-row">
-                      <div className="octave-controls" role="group" aria-label="Octave shift">
-                        <button
-                          onClick={() => setShift(kind, shift + 1)}
-                          disabled={!canShiftUp}
-                          aria-label="Octave up"
-                        >
-                          +
-                        </button>
-                        <span aria-live="polite" title="Octave shift">
-                          {`${shift > 0 ? '+' : ''}${shift}`}
-                        </span>
-                        <button
-                          onClick={() => setShift(kind, shift - 1)}
-                          disabled={!canShiftDown}
-                          aria-label="Octave down"
-                        >
-                          −
-                        </button>
-                      </div>
-                      <ScaleStaff
-                        spelled={item.spelled}
-                        clef={clef}
-                        label={item.title}
-                        keySig={sig}
-                      />
-                    </div>
-                  </div>
+                  <StaffWithControls
+                    spelled={item.spelled}
+                    clef={clef}
+                    label={item.title}
+                    keySig={sig}
+                    octave={{
+                      value: shift,
+                      canUp: canShiftUp,
+                      canDown: canShiftDown,
+                      onUp: () => setShift(kind, shift + 1),
+                      onDown: () => setShift(kind, shift - 1),
+                    }}
+                    keyControl={{
+                      name: tonicName(item.tonic),
+                      onSharper: () => setKey(kind, keyOffset + 1),
+                      onFlatter: () => setKey(kind, keyOffset - 1),
+                    }}
+                  />
                 )}
                 {display.noteNames && <p className="practice-notes">{item.notes.join(' ')}</p>}
               </div>

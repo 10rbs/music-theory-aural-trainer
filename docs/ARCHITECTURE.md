@@ -35,7 +35,7 @@ Rules:
 ```
 src/
   core/
-    theory/        notes, intervals, chords, scales, keys (M4),
+    theory/        notes, intervals, chords (+ spellChord), scales, keys (M4),
                    transpose.ts (diatonic transposition, MusicXML semantics) (M4.7)
     exercises/     exercise contract, registry, per-drill generators+graders, seeded RNG
     playback/      PlaybackSpec types + builders (notes+beats+bpm → timed events)
@@ -45,14 +45,19 @@ src/
     notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6),
                    key-signature.ts (signature accidentals + inline suppression) (M4.7)
     streak.ts      pure streak logic, dates passed in
+    register.ts    clef → comfortable register anchoring, shared by scales +
+                   warm-ups                                                    (M4.8)
+    warmups.ts     generative brass warm-ups (long tones, slurs, arpeggios) +
+                   public-domain Arban items; same shape as a scale item       (M4.8)
     assignments.ts date-seeded daily scale assignments; register follows the
                    chosen clef, eligible scale types are a setting             (M4/M4.6)
   shell/
     audio/         context (lazy AudioContext, resume-on-gesture), synth,
                    scheduler (lookahead driver), mic (M3), drone (M4.5)
     storage/       ProgressStore interface, idb-store, migrate-v0
-  features/        drills/, tuner/, metronome/, practice/, settings/, stats/
-  routes/          __root, index, drill.$exerciseId, practice
+  features/        drills/, tuner/, metronome/, practice/ (+ StaffWithControls,
+                   shared with warmup/), warmup/, settings/, stats/
+  routes/          __root, index, drill.$exerciseId, practice, warmup
   components/      shared primitives (DropWidget — header pill + drop-down panel)
 ```
 
@@ -103,6 +108,13 @@ def and renders the component matching its `interaction`.
   additionally mirrored to localStorage (`aural-trainer:theme`) purely so
   `main.tsx` can apply it before first paint — the kv store stays the source
   of truth.
+- **Daily completion + streak.** Finishing a scale or a warm-up records an
+  append-only attempt (`exerciseId` `scale-practice` / `warmup`) and stores the
+  day's completed ids under a date-suffixed kv key (`practice:<date>` /
+  `warmup:<date>`, local dates). The streak is derived from attempts by date, so
+  any exercise type feeds it — warm-ups (M4.8) needed no schema change, just the
+  new id and key. Per-slot octave/key transpose shifts persist under
+  `practiceOctaves`/`practiceKeys` and `warmupOctaves`/`warmupKeys`.
 - **v0 migration**: one-time import of the vanilla app's localStorage key
   `aural-trainer:stats:v1` (streak + per-mode aggregates). The old key is left
   untouched for rollback. Note: v0 used UTC dates for "today"; the new code uses

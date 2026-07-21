@@ -28,3 +28,11 @@ export function harmonic(midis: readonly number[], bpm = 100, durationBeats = 2.
     events: [{ midi: midis, startBeat: 0, durationBeats }],
   }
 }
+
+/** One note after another, each held for `beatsEach` beats — long tones, slurs. */
+export function sustained(midis: readonly number[], bpm = 60, beatsEach = 4): PlaybackSpec {
+  return {
+    bpm,
+    events: midis.map((m, i) => ({ midi: [m], startBeat: i * beatsEach, durationBeats: beatsEach })),
+  }
+}
