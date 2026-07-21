@@ -160,8 +160,25 @@ export function PracticeView() {
               <div className="practice-info">
                 <h3>{item.title}</h3>
                 {display.notation && (
-                  <div className="staff-row">
-                    <div className="staff-controls">
+                  <div className="staff-block">
+                    <div className="key-controls" role="group" aria-label="Key">
+                      <button
+                        onClick={() => setKey(kind, keyOffset - 1)}
+                        aria-label="Key down (flatter)"
+                      >
+                        ♭
+                      </button>
+                      <span aria-live="polite" title="Key">
+                        {tonicName(item.tonic)}
+                      </span>
+                      <button
+                        onClick={() => setKey(kind, keyOffset + 1)}
+                        aria-label="Key up (sharper)"
+                      >
+                        ♯
+                      </button>
+                    </div>
+                    <div className="staff-row">
                       <div className="octave-controls" role="group" aria-label="Octave shift">
                         <button
                           onClick={() => setShift(kind, shift + 1)}
@@ -181,25 +198,13 @@ export function PracticeView() {
                           −
                         </button>
                       </div>
-                      <div className="key-controls" role="group" aria-label="Key">
-                        <button
-                          onClick={() => setKey(kind, keyOffset + 1)}
-                          aria-label="Key up (sharper)"
-                        >
-                          ♯
-                        </button>
-                        <span aria-live="polite" title="Key">
-                          {tonicName(item.tonic)}
-                        </span>
-                        <button
-                          onClick={() => setKey(kind, keyOffset - 1)}
-                          aria-label="Key down (flatter)"
-                        >
-                          ♭
-                        </button>
-                      </div>
+                      <ScaleStaff
+                        spelled={item.spelled}
+                        clef={clef}
+                        label={item.title}
+                        keySig={sig}
+                      />
                     </div>
-                    <ScaleStaff spelled={item.spelled} clef={clef} label={item.title} keySig={sig} />
                   </div>
                 )}
                 {display.noteNames && <p className="practice-notes">{item.notes.join(' ')}</p>}
