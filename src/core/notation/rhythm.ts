@@ -67,16 +67,17 @@ export interface RhythmLayout {
 
 const EPS = 1e-6
 
-// horizontal spacing (px)
+// horizontal spacing (px). Heads are ~12px wide, so advances stay well clear of
+// that to avoid a cramped, noisy look — even beamed sixteenths keep a gap.
 const LEFT_PAD = 62 // clef + time signature, then the first note
-const ADVANCE: Record<number, number> = { 1: 58, 2: 42, 4: 28, 8: 17, 16: 12 }
-const DOT_EXTRA = 6
+const ADVANCE: Record<number, number> = { 1: 62, 2: 46, 4: 32, 8: 22, 16: 17 }
+const DOT_EXTRA = 7
 const BARLINE_GAP = 12
 const TRAIL_PAD = 10
 
 // vertical (staff steps); the renderer converts steps to px
 const MIDDLE = 4 // middle staff line
-const STEM_STEPS = 7 // ~3.5 line-spaces
+const STEM_STEPS = 6 // ~3 line-spaces
 const SECONDARY_OFFSET = 1.6
 
 const VALUE_TABLE: readonly [number, number, 0 | 1][] = [
