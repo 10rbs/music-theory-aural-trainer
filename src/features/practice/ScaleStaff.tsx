@@ -44,7 +44,10 @@ export function ScaleStaff({
   const sigMap = signatureMap(keySig)
 
   const noteX0 = CLEF_END + sig.length * SIG_DX + NOTE_GAP
-  const width = noteX0 + 7 * NOTE_DX + 22
+  // size to the run's note count (min 8 notes, so short runs aren't cramped);
+  // runs longer than an octave — the extended lip slurs, wider arpeggios — must
+  // fit or the last heads clip off the viewBox.
+  const width = noteX0 + Math.max(7, notes.length - 1) * NOTE_DX + 22
 
   // fit the staff, the clef's overhang, every note, and any key-signature
   // accidentals that sit off the staff (+1 step so glyphs aren't shaved)

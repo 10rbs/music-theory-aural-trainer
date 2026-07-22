@@ -18,6 +18,7 @@ function Home() {
   const [practiceDone, setPracticeDone] = useState(0)
   const [practiceTotal, setPracticeTotal] = useState(() => dailyAssignment(today).length)
   const [warmupDone, setWarmupDone] = useState(0)
+  const [studiesDone, setStudiesDone] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -31,6 +32,9 @@ function Home() {
     })
     void store.getSetting<string[]>(`warmup:${today}`, []).then((ids) => {
       if (!cancelled) setWarmupDone(ids.length)
+    })
+    void store.getSetting<string[]>(`study:${today}`, []).then((ids) => {
+      if (!cancelled) setStudiesDone(ids.length)
     })
     const loadTotal = () =>
       void store.getSetting<string[]>('practiceScales', [...ALL_SCALE_TYPES]).then((enabled) => {
@@ -63,6 +67,13 @@ function Home() {
         <p>Long tones, lip flexibility, and arpeggios — with Arban examples.</p>
         <span className="mode-stat">
           {warmupDone > 0 ? `${warmupDone} done today ✓` : 'Start your routine'}
+        </span>
+      </Link>
+      <Link to="/studies" className="mode-card practice-card">
+        <h2>Arban studies</h2>
+        <p>Dive deeper — browse Arban's technique studies by category and pick one.</p>
+        <span className="mode-stat">
+          {studiesDone > 0 ? `${studiesDone} done today ✓` : 'Browse the library'}
         </span>
       </Link>
       <div className="mode-grid">

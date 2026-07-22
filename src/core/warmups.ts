@@ -19,9 +19,20 @@ import { rootMidi } from './register'
 import { type Clef } from './notation/staff'
 import { type Meter, type RhythmEvent } from './notation/rhythm'
 
-export type WarmupCategory = 'long-tones' | 'lip-flexibility' | 'arpeggios' | 'articulation'
+// The daily routine uses the first four; the deep-dive Studies page (M4.10) adds
+// 'scales' and 'thirds'. Widening the union keeps one WarmupExercise shape for both.
+export type WarmupCategory =
+  | 'long-tones'
+  | 'lip-flexibility'
+  | 'arpeggios'
+  | 'articulation'
+  | 'scales'
+  | 'thirds'
 
-export const WARMUP_CATEGORIES: { id: WarmupCategory; label: string; blurb: string }[] = [
+/** The subset the daily routine uses (scales/thirds are Studies-page only). */
+type DailyCategory = 'long-tones' | 'lip-flexibility' | 'arpeggios' | 'articulation'
+
+export const WARMUP_CATEGORIES: { id: DailyCategory; label: string; blurb: string }[] = [
   {
     id: 'long-tones',
     label: 'Long tones',
@@ -41,6 +52,44 @@ export const WARMUP_CATEGORIES: { id: WarmupCategory; label: string; blurb: stri
     id: 'articulation',
     label: 'Articulation',
     blurb: 'Tonguing patterns — attack each note cleanly, keep the air steady behind the tongue.',
+  },
+]
+
+/**
+ * Categories for the deep-dive Studies page — the daily four plus scales and
+ * thirds. Same shape as WARMUP_CATEGORIES; the Studies page renders these in
+ * order and pulls exercises from `arbanStudyLibrary`.
+ */
+export const STUDY_CATEGORIES: { id: WarmupCategory; label: string; blurb: string }[] = [
+  {
+    id: 'long-tones',
+    label: 'Long tones',
+    blurb: 'Build the sound first — full value on every note, steady air, tuner on.',
+  },
+  {
+    id: 'lip-flexibility',
+    label: 'Lip flexibility',
+    blurb: 'Slur between partials on one position — smooth turns, no tongue, from two partials up to five.',
+  },
+  {
+    id: 'scales',
+    label: 'Scales',
+    blurb: 'Even, connected scale work — the foundation of the Arban method.',
+  },
+  {
+    id: 'thirds',
+    label: 'Thirds',
+    blurb: 'Broken thirds up the scale — the first of Arban’s interval studies.',
+  },
+  {
+    id: 'arpeggios',
+    label: 'Arpeggios',
+    blurb: 'Broken chords ascending and descending. Use ♯/♭ to take each one through every key.',
+  },
+  {
+    id: 'articulation',
+    label: 'Articulation',
+    blurb: 'Tonguing studies — clean attacks, steady air, light and even at speed.',
   },
 ]
 
@@ -211,11 +260,19 @@ function slurPattern(
 
 const FOUR_FOUR: Meter = { beats: 4, unit: 4 }
 
-/** C-major scale notes at the given degree indices (0..7), in the clef register. */
+/**
+ * C-major scale notes at the given degree indices, in the clef register. Index 7
+ * is the octave tonic; indices ≥ 7 wrap into higher octaves (used by the thirds
+ * study, which reaches the ninth degree), reusing each degree's spelling.
+ */
 function scaleNotes(clef: Clef, indices: readonly number[]): SpelledNote[] {
   const base = rootMidi(C, clef)
-  const degs = spellScaleDegrees(C, MAJOR_INTERVALS)
-  return indices.map((i) => ({ ...degs[i % 7], midi: base + MAJOR_INTERVALS[i] }))
+  const degs = spellScaleDegrees(C, MAJOR_INTERVALS) // 8 entries; degs[7] = octave C
+  return indices.map((i) => {
+    const oct = Math.floor(i / 7)
+    const d = i % 7
+    return { ...degs[d], midi: base + MAJOR_INTERVALS[d] + 12 * oct }
+  })
 }
 
 /** Build a PlaybackSpec from rhythm events — rests advance time but make no sound. */
@@ -258,10 +315,97 @@ function articulation(
 const OCTAVE_UP_DOWN = [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0] as const
 const repeat = <T,>(xs: readonly T[], n: number): T[] => Array.from({ length: n }, () => xs).flat()
 
+// ── Studies (the deep-dive /studies page) ────────────────────────────────────
+// Longer engine-safe passages rendered as rhythmic notation (RhythmStaff wraps
+// onto multiple systems at a natural note size). Single voice, no tuplets/ties —
+// within the bounded rhythm engine (docs/decisions/0004).
+
+const EIGHTH = 0.5
+
+/** Ascend degrees 0..n then descend back to 0 (top not repeated): 2n+1 notes. */
+function scaleUpDown(n = 7): number[] {
+  const up = Array.from({ length: n + 1 }, (_, i) => i)
+  return [...up, ...up.slice(0, -1).reverse()]
+}
+
+/** Broken thirds up one octave: (0,2)(1,3)…(6,8) then the octave tonic (15 notes). */
+function thirdsUp(): number[] {
+  const out: number[] = []
+  for (let d = 0; d <= 6; d++) out.push(d, d + 2)
+  out.push(7)
+  return out
+}
+
+/**
+ * A rhythmic study from spelled notes + a matching beats array, with optional
+ * trailing rests (beats, no note) that round the passage out to whole measures.
+ * Same shape as `articulation` but any category and rest-aware.
+ */
+function rhythmicStudy(
+  id: string,
+  category: WarmupCategory,
+  title: string,
+  notes: SpelledNote[],
+  beats: readonly number[],
+  bpm: number,
+  instruction: string,
+  trailingRests: readonly number[] = [],
+  source?: WarmupSource,
+): WarmupExercise {
+  const events: RhythmEvent[] = [
+    ...notes.map((n, i) => ({ note: n, beats: beats[i] })),
+    ...trailingRests.map((b) => ({ beats: b })),
+  ]
+  return {
+    id,
+    category,
+    title,
+    instruction,
+    spelled: notes,
+    midi: notes.map((n) => n.midi),
+    playback: rhythmPlayback(events, bpm),
+    rhythm: { events, meter: FOUR_FOUR },
+    transposable: 'octave',
+    source,
+  }
+}
+
+/** Arban — one-octave major scale, up and down in even eighths (two measures). */
+function majorScaleStudy(clef: Clef): WarmupExercise {
+  const notes = scaleNotes(clef, scaleUpDown())
+  return rhythmicStudy(
+    'scale:major',
+    'scales',
+    'Major scale — one octave',
+    notes,
+    repeat([EIGHTH], notes.length), // 15 eighths…
+    96,
+    'Even eighth notes, ascending and descending — smooth, connected, in tune.',
+    [EIGHTH], // …plus a rest to complete the second measure
+    ARBAN,
+  )
+}
+
+/** Arban — broken thirds up the major scale, even eighths (two measures). */
+function thirdsStudy(clef: Clef): WarmupExercise {
+  const notes = scaleNotes(clef, thirdsUp())
+  return rhythmicStudy(
+    'thirds:major',
+    'thirds',
+    'Study in thirds',
+    notes,
+    repeat([EIGHTH], notes.length),
+    88,
+    'Broken thirds up the scale — keep each pair even and connected.',
+    [EIGHTH],
+    ARBAN,
+  )
+}
+
 // ── Library ─────────────────────────────────────────────────────────────────
 
 /** The full warm-up library, grouped by category, in the given clef register. */
-export function warmupLibrary(clef: Clef): Record<WarmupCategory, WarmupExercise[]> {
+export function warmupLibrary(clef: Clef): Record<DailyCategory, WarmupExercise[]> {
   return {
     'long-tones': [
       longTonePattern('long:desc5', 'Descending five-note long tones', [4, 3, 2, 1, 0], clef),
@@ -300,6 +444,56 @@ export function warmupLibrary(clef: Clef): Record<WarmupCategory, WarmupExercise
         'Arban — sixteenth-note study',
         scaleNotes(clef, [...OCTAVE_UP_DOWN, ...OCTAVE_UP_DOWN]),
         repeat([0.25], 32), // thirty-two sixteenths — two measures
+        84,
+        'Even, light single tongue up and back down — stay relaxed at speed.',
+        ARBAN,
+      ),
+    ],
+  }
+}
+
+/**
+ * The deep-dive study library, grouped by STUDY_CATEGORIES, in the clef
+ * register. A fuller set than the daily routine: more flexibility slurs, the
+ * scale and thirds studies, and every arpeggio. Curated items (scales, thirds,
+ * the longer slur, and the Arban arpeggio/sixteenth/long-tone studies) carry
+ * public-domain 1864 provenance — transcribed in-house, per docs/decisions/0003.
+ */
+export function arbanStudyLibrary(clef: Clef): Record<WarmupCategory, WarmupExercise[]> {
+  return {
+    'long-tones': [
+      longTonePattern('long:arban', 'Sustained scale', [0, 1, 2, 3, 4, 3, 2, 1, 0], clef, ARBAN),
+      longTonePattern('long:desc5', 'Descending five-note', [4, 3, 2, 1, 0], clef),
+    ],
+    'lip-flexibility': [
+      slurPattern('slur:121', 'Two-partial slur', [1, 2, 1], clef),
+      slurPattern('slur:12321', 'Three-partial slur', [1, 2, 3, 2, 1], clef),
+      slurPattern('slur:1234', 'Four-partial slur', [1, 2, 3, 4, 3, 2, 1], clef),
+      slurPattern('slur:arban', 'Arban — slur study', [1, 2, 3, 2, 1, 2, 1], clef, ARBAN),
+      slurPattern('slur:12345', 'Extended flexibility study', [1, 2, 3, 4, 5, 4, 3, 2, 1], clef, ARBAN),
+    ],
+    scales: [majorScaleStudy(clef)],
+    thirds: [thirdsStudy(clef)],
+    arpeggios: [
+      arpeggio(C, chord('maj'), clef),
+      arpeggio(C, chord('min'), clef),
+      arpeggio(C, chord('dom7'), clef),
+      arbanArpeggio(clef),
+    ],
+    articulation: [
+      articulation(
+        'artic:dotted',
+        'Dotted articulation',
+        scaleNotes(clef, OCTAVE_UP_DOWN),
+        repeat([0.75, 0.25], 8),
+        88,
+        'Long–short: a dotted eighth then a sixteenth on every beat.',
+      ),
+      articulation(
+        'artic:arban',
+        'Arban — sixteenth-note study',
+        scaleNotes(clef, [...OCTAVE_UP_DOWN, ...OCTAVE_UP_DOWN]),
+        repeat([0.25], 32),
         84,
         'Even, light single tongue up and back down — stay relaxed at speed.',
         ARBAN,

@@ -551,6 +551,66 @@ input[type='range'] {
   color: var(--text-dim);
 }
 
+/* Studies page — category tabs, exercise chips, and the focused study card */
+
+.studies-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.studies-cat-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.studies-cat-btn:hover {
+  background: var(--surface-hover);
+}
+
+.studies-cat-btn.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.studies-exercises {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.studies-ex-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.studies-ex-btn:hover {
+  background: var(--surface-hover);
+}
+
+.studies-ex-btn.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.studies-ex-btn.done {
+  color: var(--good);
+}
+
 /* Settings menu (header widget) */
 
 .widget-panel.settings-panel {
