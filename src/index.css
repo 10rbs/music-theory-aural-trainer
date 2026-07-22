@@ -706,7 +706,7 @@ input[type='range'] {
   text-align: center;
 }
 
-/* Notation staff */
+/* Notation staff (shared by ScaleStaff + RhythmStaff) */
 
 .scale-staff {
   display: block;
@@ -716,39 +716,102 @@ input[type='range'] {
   margin: 0;
 }
 
-.scale-staff .staff-lines line {
+/* Rhythm staves render at natural size (consistent note size across exercises),
+   shrinking only on narrow screens — the width comes from an inline style. */
+.rhythm-staff {
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+:is(.scale-staff, .rhythm-staff) .staff-lines line {
   stroke: var(--text-dim);
   stroke-opacity: 0.45;
   stroke-width: 1;
 }
 
-.scale-staff .staff-clef {
+:is(.scale-staff, .rhythm-staff) .staff-clef {
   fill: none;
   stroke: var(--text-dim);
   stroke-width: 1.7;
   stroke-linecap: round;
 }
 
-.scale-staff .staff-clef-dot {
+:is(.scale-staff, .rhythm-staff) .staff-clef-dot {
   fill: var(--text-dim);
 }
 
-.scale-staff .staff-ledger {
+:is(.scale-staff, .rhythm-staff) .staff-ledger {
   stroke: var(--text-dim);
   stroke-opacity: 0.75;
   stroke-width: 1.3;
 }
 
-.scale-staff .staff-head {
+:is(.scale-staff, .rhythm-staff) .staff-head {
   fill: none;
   stroke: var(--text);
   stroke-width: 2.4;
 }
 
-.scale-staff .staff-accidental {
+:is(.scale-staff, .rhythm-staff) .staff-accidental {
   fill: var(--text);
   font-size: 12px;
   text-anchor: middle;
+}
+
+/* RhythmStaff-only marks */
+
+.rhythm-staff .staff-head-filled {
+  fill: var(--text);
+  stroke: none;
+}
+
+.rhythm-staff .staff-stem {
+  stroke: var(--text);
+  stroke-width: 1.4;
+}
+
+.rhythm-staff .staff-beam line {
+  stroke: var(--text);
+  stroke-width: 3.4;
+  stroke-linecap: butt;
+}
+
+.rhythm-staff .staff-flag path {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.rhythm-staff .staff-dot {
+  fill: var(--text);
+}
+
+.rhythm-staff .staff-barline {
+  stroke: var(--text-dim);
+  stroke-opacity: 0.7;
+  stroke-width: 1.2;
+}
+
+.rhythm-staff .staff-timesig {
+  fill: var(--text-dim);
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.rhythm-staff .staff-rest {
+  fill: var(--text);
+}
+
+.rhythm-staff .staff-rest-stroke {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .practice-actions {

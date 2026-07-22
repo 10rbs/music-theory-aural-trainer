@@ -5,8 +5,10 @@
 
 import type { SpelledNote } from '../../core/assignments'
 import type { KeySignature } from '../../core/notation/key-signature'
+import type { Meter, RhythmEvent } from '../../core/notation/rhythm'
 import { type Clef } from '../../core/notation/staff'
 import { ScaleStaff } from './ScaleStaff'
+import { RhythmStaff } from './RhythmStaff'
 
 export interface OctaveControl {
   value: number
@@ -27,6 +29,7 @@ export function StaffWithControls({
   clef,
   label,
   keySig,
+  rhythm,
   octave,
   keyControl,
 }: {
@@ -34,6 +37,8 @@ export function StaffWithControls({
   clef: Clef
   label: string
   keySig?: KeySignature
+  /** when present, render rhythmic notation (RhythmStaff) instead of a scale run */
+  rhythm?: { events: RhythmEvent[]; meter: Meter }
   octave: OctaveControl
   keyControl?: KeyControl
 }) {
@@ -64,7 +69,11 @@ export function StaffWithControls({
             −
           </button>
         </div>
-        <ScaleStaff spelled={spelled} clef={clef} label={label} keySig={keySig} />
+        {rhythm ? (
+          <RhythmStaff events={rhythm.events} meter={rhythm.meter} clef={clef} label={label} />
+        ) : (
+          <ScaleStaff spelled={spelled} clef={clef} label={label} keySig={keySig} />
+        )}
       </div>
     </div>
   )

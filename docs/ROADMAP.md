@@ -14,7 +14,8 @@ Status legend: ✅ done · 🚧 in progress · ⬜ planned
 | **M4.5** | ✅ | TE-style header widgets | Tuner + metronome recast as always-available header drop-widgets (pill toggles the tool, chevron drops the panel; keep running across navigation). Tuner gains a pitch-history graph and a drone note circle (octave 2–5, A4-aware). Dashboard is the main page; `/tuner` + `/metronome` routes removed. Metronome + drone settings persisted |
 | **M4.6** | ✅ | Practice notation + settings | Daily scales rendered as staff notation (hand-rolled SVG, pure layout math in `core/notation/` — see `docs/decisions/0001`), header settings menu with practice customization (scale types, notation/note-name visibility, persisted per-slot octave shift), clef choice (treble/alto/tenor/bass — clef also sets the practice register; bass sits in trombone range) and light/dark theme (light default) |
 | **M4.7** | ✅ | Transposition + key signatures | Diatonic transposition primitive (`core/theory/transpose.ts`, MusicXML `<transpose>` semantics — the foundation for instrument transposition and transposable etudes; octave shift now routes through it). Key signatures rendered on the practice staves (`core/notation/key-signature.ts`): sharps/flats drawn after the clef with inline accidentals suppressed, harmonic/melodic minor keeping the natural-minor signature, modes taking the parent signature. Per-slot key button (♯/♭) steps a scale through all twelve practical keys with the signature following; persisted like the octave shift. Key-signature display is a settings toggle (default on). Still hand-rolled, no notation library — see `docs/decisions/0002` |
-| **M4.8** | ✅ | Warm-up section | `/warmup` route + home card mirroring daily practice. Generative brass warm-ups in `core/warmups.ts`: long tones, lip-flexibility slurs (harmonic-series partials), and arpeggios (major/minor/dom7 from `spellChord` in `chords.ts`). Reuses the staff, playback, and octave/key transpose controls (shared `StaffWithControls`); arpeggios transpose through the keys. A few short exercises transcribed in-house from the **public-domain 1864 Arban method** with provenance shown — see `docs/decisions/0003`. Completing a warm-up records a `warmup` attempt and counts toward the streak (no storage-schema change). Register anchoring factored into `core/register.ts`. Articulation deferred to the rhythm milestone |
+| **M4.8** | ✅ | Warm-up section | `/warmup` route + home card mirroring daily practice. Generative brass warm-ups in `core/warmups.ts`: long tones, lip-flexibility slurs (harmonic-series partials), and arpeggios (major/minor/dom7 from `spellChord` in `chords.ts`). Reuses the staff, playback, and octave/key transpose controls (shared `StaffWithControls`); arpeggios transpose through the keys. A few short exercises transcribed in-house from the **public-domain 1864 Arban method** with provenance shown — see `docs/decisions/0003`. Completing a warm-up records a `warmup` attempt and counts toward the streak (no storage-schema change). Register anchoring factored into `core/register.ts` |
+| **M4.9** | ✅ | Rhythm notation engine | Hand-rolled bounded rhythm engine (`core/notation/rhythm.ts` + `features/practice/RhythmStaff.tsx`): note values (whole→sixteenth), dots, rests, stems, flags, **beaming** (primary per beat + full/stub secondary beams), bar lines, time signatures (4/4·3/4·2/4·6/8), and **multi-system wrapping** (long passages wrap onto multiple staff lines at natural note size), single voice. Durations reuse `PlaybackSpec.durationBeats`; pitch reuses `staffLayout`. First consumer: the **Articulation** warm-up category (single tonguing, dotted patterns, an Arban sixteenth study — two-measure passages). Chose to extend the hand-rolled notation over a library — see `docs/decisions/0004`. Triplets/ties/multi-voice/MusicXML deferred |
 | **M5+** | ⬜ | Course-qualification features (rubric-gated) | See below |
 
 ## M5+ — waiting on official rubrics
@@ -28,13 +29,13 @@ provided at a future date. When they arrive, they unlock:
 - **Written theory quizzes** — key signatures, scale/chord spelling (builds on `keys.ts`)
 - **Curriculum / qualification tracking** — rubric-driven practice paths and
   progress toward qual dates
-- **Richer notation rendering** — M4.6/M4.7 shipped hand-rolled SVG for scale
-  runs, key signatures, and diatonic transposition
-  (`docs/decisions/0001-notation-rendering.md`, `0002-key-signatures-and-transposition.md`);
-  re-evaluate VexFlow/OSMD when rhythmic values, stems, beams, or note entry are
-  needed — the same point transposable **etudes** (arbitrary spelled melodies,
-  which `core/theory/transpose.ts` already handles the pitch math for) become
-  feasible
+- **Richer notation rendering** — M4.6–4.9 shipped hand-rolled SVG for scale
+  runs, key signatures, diatonic transposition, and a rhythm engine (durations,
+  rests, beaming, time signatures)
+  (`docs/decisions/0001`–`0004`); the library trigger is now **MusicXML-ingested
+  etudes** or tuplets/multi-voice/complex engraving — the same point transposable
+  **etudes** (arbitrary spelled melodies, whose pitch math `core/theory/transpose.ts`
+  already handles) become feasible
 
 Until the rubrics arrive, every design decision keeps these fits in mind — see the
 exercise contract and functional-core rules in [ARCHITECTURE.md](ARCHITECTURE.md).

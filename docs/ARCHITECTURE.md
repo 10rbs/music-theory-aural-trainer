@@ -43,7 +43,8 @@ src/
                    history.ts (pitch-history graph math)                        (M3/M4.5)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
     notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6),
-                   key-signature.ts (signature accidentals + inline suppression) (M4.7)
+                   key-signature.ts (signature accidentals + inline suppression) (M4.7),
+                   rhythm.ts (durations, rests, stems, flags, beaming, meter)   (M4.9)
     streak.ts      pure streak logic, dates passed in
     register.ts    clef → comfortable register anchoring, shared by scales +
                    warm-ups                                                    (M4.8)
@@ -55,8 +56,9 @@ src/
     audio/         context (lazy AudioContext, resume-on-gesture), synth,
                    scheduler (lookahead driver), mic (M3), drone (M4.5)
     storage/       ProgressStore interface, idb-store, migrate-v0
-  features/        drills/, tuner/, metronome/, practice/ (+ StaffWithControls,
-                   shared with warmup/), warmup/, settings/, stats/
+  features/        drills/, tuner/, metronome/, practice/ (ScaleStaff +
+                   RhythmStaff + shared staff-glyphs + StaffWithControls, shared
+                   with warmup/), warmup/, settings/, stats/
   routes/          __root, index, drill.$exerciseId, practice, warmup
   components/      shared primitives (DropWidget — header pill + drop-down panel)
 ```

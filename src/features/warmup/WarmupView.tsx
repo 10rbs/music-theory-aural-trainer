@@ -123,6 +123,7 @@ export function WarmupView() {
                       spelled={ex.spelled}
                       clef={clef}
                       label={ex.title}
+                      rhythm={ex.rhythm}
                       octave={{
                         value: shift,
                         canUp,
