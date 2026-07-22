@@ -76,6 +76,11 @@ function Home() {
           {studiesDone > 0 ? `${studiesDone} done today ✓` : 'Browse the library'}
         </span>
       </Link>
+      <Link to="/workouts" className="mode-card practice-card">
+        <h2>Workouts</h2>
+        <p>Guided full-page routines — flexibility, technique, or a daily warm-up.</p>
+        <span className="mode-stat">Start a routine</span>
+      </Link>
       <div className="mode-grid">
         {EXERCISES.map((e) => {
           const s = stats[e.id]
