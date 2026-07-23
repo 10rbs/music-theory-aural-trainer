@@ -611,6 +611,49 @@ input[type='range'] {
   color: var(--good);
 }
 
+/* Workouts page — a routine header with a progress bar, then stacked cards */
+
+.exercise-num {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.workout-head {
+  margin: 0 0 16px;
+}
+
+.workout-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workout-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  overflow: hidden;
+}
+
+.workout-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.workout-count {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.workout-count.is-complete {
+  color: var(--good);
+}
+
 /* Settings menu (header widget) */
 
 .widget-panel.settings-panel {

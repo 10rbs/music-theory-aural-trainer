@@ -28,6 +28,7 @@ export type WarmupCategory =
   | 'articulation'
   | 'scales'
   | 'thirds'
+  | 'etudes'
 
 /** The subset the daily routine uses (scales/thirds are Studies-page only). */
 type DailyCategory = 'long-tones' | 'lip-flexibility' | 'arpeggios' | 'articulation'
@@ -90,6 +91,11 @@ export const STUDY_CATEGORIES: { id: WarmupCategory; label: string; blurb: strin
     id: 'articulation',
     label: 'Articulation',
     blurb: 'Tonguing studies — clean attacks, steady air, light and even at speed.',
+  },
+  {
+    id: 'etudes',
+    label: 'Etudes',
+    blurb: 'Longer, full-page passages that wrap across several lines — put it all together.',
   },
 ]
 
@@ -260,19 +266,32 @@ function slurPattern(
 
 const FOUR_FOUR: Meter = { beats: 4, unit: 4 }
 
+const MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 10, 12] as const
+
 /**
- * C-major scale notes at the given degree indices, in the clef register. Index 7
- * is the octave tonic; indices ≥ 7 wrap into higher octaves (used by the thirds
- * study, which reaches the ninth degree), reusing each degree's spelling.
+ * Diatonic scale notes at the given degree indices, anchored to `tonic` in the
+ * clef register. Index 7 is the octave tonic; indices ≥ 7 wrap into higher
+ * octaves (the thirds study reaches the ninth degree), reusing each degree's
+ * key-correct spelling — so G major spells F♯, C minor spells E♭/A♭/B♭.
  */
-function scaleNotes(clef: Clef, indices: readonly number[]): SpelledNote[] {
-  const base = rootMidi(C, clef)
-  const degs = spellScaleDegrees(C, MAJOR_INTERVALS) // 8 entries; degs[7] = octave C
+function diatonicNotes(
+  clef: Clef,
+  tonic: Tonic,
+  intervals: readonly number[],
+  indices: readonly number[],
+): SpelledNote[] {
+  const base = rootMidi(tonic, clef)
+  const degs = spellScaleDegrees(tonic, intervals) // 7 degrees (octave entry ignored)
   return indices.map((i) => {
     const oct = Math.floor(i / 7)
     const d = i % 7
-    return { ...degs[d], midi: base + MAJOR_INTERVALS[d] + 12 * oct }
+    return { ...degs[d], midi: base + intervals[d] + 12 * oct }
   })
+}
+
+/** C-major convenience wrapper over `diatonicNotes` (the common case). */
+function scaleNotes(clef: Clef, indices: readonly number[]): SpelledNote[] {
+  return diatonicNotes(clef, C, MAJOR_INTERVALS, indices)
 }
 
 /** Build a PlaybackSpec from rhythm events — rests advance time but make no sound. */
@@ -402,6 +421,73 @@ function thirdsStudy(clef: Clef): WarmupExercise {
   )
 }
 
+/** Natural minor scale, one octave up and down in even eighths (two measures). */
+function minorScaleStudy(clef: Clef): WarmupExercise {
+  const notes = diatonicNotes(clef, C, MINOR_INTERVALS, scaleUpDown())
+  return rhythmicStudy(
+    'scale:minor',
+    'scales',
+    'Natural minor scale — one octave',
+    notes,
+    repeat([EIGHTH], notes.length),
+    96,
+    'C natural minor — even eighths up and down. Mind the lowered 3rd, 6th, and 7th.',
+    [EIGHTH],
+  )
+}
+
+// ── Etudes (longer, full-page passages) ──────────────────────────────────────
+// Multi-measure studies that wrap across several staff systems at natural note
+// size. Still single-voice, no tuplets/ties.
+
+/** Keys for the scale-cycle etude: C, G, D, A — up the circle of fifths. */
+const CYCLE_KEYS: readonly Tonic[] = [
+  { letter: 'C', alter: 0 },
+  { letter: 'G', alter: 0 },
+  { letter: 'D', alter: 0 },
+  { letter: 'A', alter: 0 },
+]
+
+/** A full-page scale etude: one-octave scales through four keys, even eighths. */
+function scaleCycleEtude(clef: Clef): WarmupExercise {
+  const events: RhythmEvent[] = []
+  const spelled: SpelledNote[] = []
+  for (const tonic of CYCLE_KEYS) {
+    for (const n of diatonicNotes(clef, tonic, MAJOR_INTERVALS, scaleUpDown())) {
+      events.push({ note: n, beats: EIGHTH })
+      spelled.push(n)
+    }
+    events.push({ beats: EIGHTH }) // a breath between keys → two clean measures each
+  }
+  return {
+    id: 'etude:scale-cycle',
+    category: 'etudes',
+    title: 'Scale cycle — C · G · D · A',
+    instruction:
+      'Four keys in a row, even eighths. Watch the accidentals — F♯ in G; F♯ C♯ in D; F♯ C♯ G♯ in A.',
+    spelled,
+    midi: spelled.map((n) => n.midi),
+    playback: rhythmPlayback(events, 100),
+    rhythm: { events, meter: FOUR_FOUR },
+    transposable: 'octave',
+    source: ARBAN,
+  }
+}
+
+/** A full-page tonguing etude: the octave up-and-down in sixteenths, ×4 (four measures). */
+function articulationEtude(clef: Clef): WarmupExercise {
+  const notes = scaleNotes(clef, repeat(OCTAVE_UP_DOWN, 4))
+  return rhythmicStudy(
+    'etude:artic',
+    'etudes',
+    'Articulation endurance',
+    notes,
+    repeat([0.25], notes.length), // 64 sixteenths = four 4/4 measures
+    92,
+    'Four measures of even single tonguing — stay light and relaxed; build endurance.',
+  )
+}
+
 // ── Library ─────────────────────────────────────────────────────────────────
 
 /** The full warm-up library, grouped by category, in the given clef register. */
@@ -469,15 +555,19 @@ export function arbanStudyLibrary(clef: Clef): Record<WarmupCategory, WarmupExer
       slurPattern('slur:121', 'Two-partial slur', [1, 2, 1], clef),
       slurPattern('slur:12321', 'Three-partial slur', [1, 2, 3, 2, 1], clef),
       slurPattern('slur:1234', 'Four-partial slur', [1, 2, 3, 4, 3, 2, 1], clef),
+      slurPattern('slur:135', 'Wide-interval slur (1–3–5)', [1, 3, 5, 3, 1], clef),
       slurPattern('slur:arban', 'Arban — slur study', [1, 2, 3, 2, 1, 2, 1], clef, ARBAN),
       slurPattern('slur:12345', 'Extended flexibility study', [1, 2, 3, 4, 5, 4, 3, 2, 1], clef, ARBAN),
     ],
-    scales: [majorScaleStudy(clef)],
+    scales: [majorScaleStudy(clef), minorScaleStudy(clef)],
     thirds: [thirdsStudy(clef)],
     arpeggios: [
       arpeggio(C, chord('maj'), clef),
       arpeggio(C, chord('min'), clef),
+      arpeggio(C, chord('dim'), clef),
       arpeggio(C, chord('dom7'), clef),
+      arpeggio(C, chord('maj7'), clef),
+      arpeggio(C, chord('min7'), clef),
       arbanArpeggio(clef),
     ],
     articulation: [
@@ -499,6 +589,7 @@ export function arbanStudyLibrary(clef: Clef): Record<WarmupCategory, WarmupExer
         ARBAN,
       ),
     ],
+    etudes: [scaleCycleEtude(clef), articulationEtude(clef)],
   }
 }
 
@@ -536,4 +627,104 @@ export function shiftWarmup(ex: WarmupExercise, octaves: number): WarmupExercise
       ),
     },
   }
+}
+
+// ── Transpose resolution ─────────────────────────────────────────────────────
+// The Studies and Workouts views share this: given raw persisted octave/key
+// offsets, produce the transposed exercise plus whether the octave buttons can
+// still move (kept in core so the range math is tested, not re-derived per view).
+
+export const MAX_OCTAVE_SHIFT = 2
+const MIN_MIDI = 21 // A0
+const MAX_MIDI = 108 // C8
+
+/** Clamp an octave shift to ±2 and keep every note inside the piano range. */
+export function clampOctaveShift(ex: WarmupExercise, shift: number): number {
+  let s = Math.max(-MAX_OCTAVE_SHIFT, Math.min(MAX_OCTAVE_SHIFT, shift))
+  const lo = Math.min(...ex.midi)
+  const hi = Math.max(...ex.midi)
+  while (s < 0 && lo + s * 12 < MIN_MIDI) s++
+  while (s > 0 && hi + s * 12 > MAX_MIDI) s--
+  return s
+}
+
+export interface ResolvedWarmup {
+  ex: WarmupExercise
+  shift: number
+  keyOffset: number
+  canOctaveUp: boolean
+  canOctaveDown: boolean
+}
+
+/** Apply persisted key + octave offsets and report remaining octave headroom. */
+export function resolveWarmup(
+  base: WarmupExercise,
+  clef: Clef,
+  rawOctave: number,
+  rawKey: number,
+): ResolvedWarmup {
+  const keyOffset = mod(rawKey, 12)
+  const keyed = rekeyWarmup(base, keyOffset, clef)
+  const shift = clampOctaveShift(keyed, rawOctave)
+  const ex = shiftWarmup(keyed, shift)
+  const lo = Math.min(...ex.midi)
+  const hi = Math.max(...ex.midi)
+  return {
+    ex,
+    shift,
+    keyOffset,
+    canOctaveUp: shift < MAX_OCTAVE_SHIFT && hi + 12 <= MAX_MIDI,
+    canOctaveDown: shift > -MAX_OCTAVE_SHIFT && lo - 12 >= MIN_MIDI,
+  }
+}
+
+// ── Workouts (guided full-page routines) ─────────────────────────────────────
+// A workout is an ordered list of study ids presented as one page. Completion
+// reuses the Studies page's per-item done-set (study:<date>), so a study marked
+// done in a workout shows done in the browser too.
+
+export interface Workout {
+  id: string
+  title: string
+  description: string
+  itemIds: readonly string[]
+}
+
+export const WORKOUTS: readonly Workout[] = [
+  {
+    id: 'flexibility',
+    title: 'Flexibility workout',
+    description: 'Open up the range — slurs from two partials up to five, then a long-tone cooldown.',
+    itemIds: ['slur:121', 'slur:12321', 'slur:1234', 'slur:12345', 'long:desc5'],
+  },
+  {
+    id: 'technique',
+    title: 'Technique workout',
+    description: 'Scales, thirds, an arpeggio, and a tonguing study — a full technical round.',
+    itemIds: ['scale:major', 'scale:minor', 'thirds:major', 'arp:maj', 'artic:arban'],
+  },
+  {
+    id: 'daily',
+    title: 'Daily warm-up',
+    description: 'A short everyday routine: long tones, a slur, a scale, an arpeggio, light tonguing.',
+    itemIds: ['long:arban', 'slur:12321', 'scale:major', 'arp:maj', 'artic:dotted'],
+  },
+]
+
+/** Resolve a workout's item ids to exercises from the study library, in order. */
+export function buildWorkout(
+  id: string,
+  clef: Clef,
+): { workout: Workout; exercises: WarmupExercise[] } | undefined {
+  const workout = WORKOUTS.find((w) => w.id === id)
+  if (!workout) return undefined
+  const byId = new Map(
+    Object.values(arbanStudyLibrary(clef))
+      .flat()
+      .map((e) => [e.id, e] as const),
+  )
+  const exercises = workout.itemIds
+    .map((iid) => byId.get(iid))
+    .filter((e): e is WarmupExercise => e !== undefined)
+  return { workout, exercises }
 }

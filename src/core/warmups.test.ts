@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import {
+  MAX_OCTAVE_SHIFT,
   STUDY_CATEGORIES,
   WARMUP_CATEGORIES,
+  WORKOUTS,
   arbanStudyLibrary,
+  buildWorkout,
   rekeyWarmup,
+  resolveWarmup,
   shiftWarmup,
   warmupLibrary,
   type WarmupExercise,
@@ -203,5 +207,71 @@ describe('arbanStudyLibrary — the deep-dive studies page', () => {
       expect(src?.composer).toContain('Arban')
     }
     expect(findStudy('arp:maj').source).toBeUndefined()
+    expect(findStudy('scale:minor').source).toBeUndefined() // generative
+  })
+})
+
+describe('studies — new content, etudes, and workouts (M4.11)', () => {
+  test('natural minor scale study spells the lowered 3rd, 6th, 7th', () => {
+    const ex = findStudy('scale:minor')
+    expect(names(ex)).toEqual(
+      ['C', 'D', 'E♭', 'F', 'G', 'A♭', 'B♭', 'C', 'B♭', 'A♭', 'G', 'F', 'E♭', 'D', 'C'],
+    )
+    expect(ex.midi).toEqual([60, 62, 63, 65, 67, 68, 70, 72, 70, 68, 67, 65, 63, 62, 60])
+  })
+
+  test('more arpeggios: diminished, maj7 and min7 join the library', () => {
+    const arps = arbanStudyLibrary('treble').arpeggios.map((e) => e.id)
+    expect(arps).toEqual(expect.arrayContaining(['arp:dim', 'arp:maj7', 'arp:min7']))
+    expect(findStudy('arp:min7').transposable).toBe('key') // still key-transposable
+  })
+
+  test('scale-cycle etude runs four keys, spelling each key correctly, over eight measures', () => {
+    const ex = findStudy('etude:scale-cycle')
+    expect(ex.spelled).toHaveLength(60) // 4 keys × 15 notes
+    expect(ex.rhythm!.events).toHaveLength(64) // + one breath rest per key
+    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(32) // eight 4/4 measures
+    const spelled = new Set(names(ex))
+    expect(spelled).toContain('F♯') // G, D, A
+    expect(spelled).toContain('C♯') // D, A
+    expect(spelled).toContain('G♯') // A
+    expect(spelled.has('E♯') || spelled.has('B♯')).toBe(false) // no theoretical spellings
+    expect(ex.source?.year).toBe(1864)
+  })
+
+  test('articulation endurance etude is sixty-four sixteenths across four measures', () => {
+    const ex = findStudy('etude:artic')
+    expect(ex.rhythm!.events).toHaveLength(64)
+    expect(ex.rhythm!.events.every((e) => e.beats === 0.25)).toBe(true)
+    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(16)
+    expect(ex.category).toBe('etudes')
+  })
+
+  test('resolveWarmup clamps octave shift and reports headroom', () => {
+    const base = findStudy('scale:major')
+    const flat = resolveWarmup(base, 'treble', 0, 0)
+    expect(flat.ex.midi).toEqual(base.midi) // no-op passes through
+    const shifted = resolveWarmup(base, 'treble', 1, 0)
+    expect(shifted.shift).toBe(1)
+    expect(shifted.ex.midi).toEqual(base.midi.map((m) => m + 12))
+    const clamped = resolveWarmup(base, 'treble', 9, 0)
+    expect(clamped.shift).toBeLessThanOrEqual(MAX_OCTAVE_SHIFT)
+    expect(clamped.canOctaveUp).toBe(false) // at the ceiling
+  })
+
+  test('resolveWarmup applies the key offset for key-transposable exercises', () => {
+    const cMaj = findStudy('arp:maj')
+    const r = resolveWarmup(cMaj, 'treble', 0, 9) // C → +9 → E♭
+    expect(r.keyOffset).toBe(9)
+    expect(r.ex.tonic).toEqual(MAJOR_KEYS[9])
+  })
+
+  test('every workout resolves all of its items, in order', () => {
+    for (const w of WORKOUTS) {
+      const built = buildWorkout(w.id, 'treble')!
+      expect(built.exercises).toHaveLength(w.itemIds.length) // no dangling ids
+      expect(built.exercises.map((e) => e.id)).toEqual([...w.itemIds])
+    }
+    expect(buildWorkout('does-not-exist', 'treble')).toBeUndefined()
   })
 })
