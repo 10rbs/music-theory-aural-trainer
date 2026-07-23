@@ -174,13 +174,14 @@ describe('arbanStudyLibrary — the deep-dive studies page', () => {
     }
   })
 
-  test('major scale study is a one-octave scale up and down, two measures + rest', () => {
+  test('major scale study is a one-octave scale up and down, ending on a held quarter', () => {
     const ex = findStudy('scale:major')
     expect(names(ex)).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C', 'B', 'A', 'G', 'F', 'E', 'D', 'C'])
     expect(ex.midi).toEqual([60, 62, 64, 65, 67, 69, 71, 72, 71, 69, 67, 65, 64, 62, 60])
     expect(ex.rhythm!.meter).toEqual({ beats: 4, unit: 4 })
-    expect(ex.rhythm!.events).toHaveLength(16) // 15 eighths + a closing eighth rest
-    expect(ex.rhythm!.events.filter((e) => !e.note)).toHaveLength(1)
+    expect(ex.rhythm!.events).toHaveLength(15) // 14 eighths + a quarter, no trailing rest
+    expect(ex.rhythm!.events.filter((e) => !e.note)).toHaveLength(0) // no rests
+    expect(ex.rhythm!.events.at(-1)!.beats).toBe(1) // lands on a held quarter
     expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(8) // two 4/4 measures
     expect(ex.source?.year).toBe(1864)
   })
@@ -230,7 +231,8 @@ describe('studies — new content, etudes, and workouts (M4.11)', () => {
   test('scale-cycle etude runs four keys, spelling each key correctly, over eight measures', () => {
     const ex = findStudy('etude:scale-cycle')
     expect(ex.spelled).toHaveLength(60) // 4 keys × 15 notes
-    expect(ex.rhythm!.events).toHaveLength(64) // + one breath rest per key
+    expect(ex.rhythm!.events).toHaveLength(60) // no rests — each key ends on a held quarter
+    expect(ex.rhythm!.events.filter((e) => !e.note)).toHaveLength(0)
     expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(32) // eight 4/4 measures
     const spelled = new Set(names(ex))
     expect(spelled).toContain('F♯') // G, D, A
@@ -238,6 +240,23 @@ describe('studies — new content, etudes, and workouts (M4.11)', () => {
     expect(spelled).toContain('G♯') // A
     expect(spelled.has('E♯') || spelled.has('B♯')).toBe(false) // no theoretical spellings
     expect(ex.source?.year).toBe(1864)
+  })
+
+  test('the F-major etude is eight continuous bars, one-flat signature, no rests', () => {
+    const ex = findStudy('etude:fmajor')
+    expect(ex.category).toBe('etudes')
+    expect(ex.spelled).toHaveLength(60) // four 15-note phrases
+    expect(ex.rhythm!.events.filter((e) => !e.note)).toHaveLength(0) // continuous — no rests
+    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(32) // eight 4/4 bars
+    expect(ex.keySig).toEqual({ type: 'flat', count: 1, letters: ['B'] }) // F major
+    // each two-bar phrase ends on a held quarter
+    expect([14, 29, 44, 59].every((i) => ex.rhythm!.events[i].beats === 1)).toBe(true)
+  })
+
+  test('no scale study or etude pads the bar with a trailing rest', () => {
+    for (const id of ['scale:major', 'scale:minor', 'thirds:major', 'etude:scale-cycle', 'etude:fmajor']) {
+      expect(findStudy(id).rhythm!.events.some((e) => !e.note)).toBe(false)
+    }
   })
 
   test('articulation endurance etude is sixty-four sixteenths across four measures', () => {
