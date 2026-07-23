@@ -352,6 +352,13 @@ const repeat = <T,>(xs: readonly T[], n: number): T[] => Array.from({ length: n 
 
 const EIGHTH = 0.5
 
+/**
+ * Beats for a run played in eighths that ends on a quarter — a clean phrase
+ * ending (the held tonic) instead of a lone eighth followed by a rest. n notes
+ * → (n−1) eighths + one quarter, which lands on whole beats for odd n.
+ */
+const endOnQuarter = (n: number): number[] => [...repeat([EIGHTH], n - 1), 1]
+
 /** Ascend degrees 0..n then descend back to 0 (top not repeated): 2n+1 notes. */
 function scaleUpDown(n = 7): number[] {
   const up = Array.from({ length: n + 1 }, (_, i) => i)
@@ -410,10 +417,10 @@ function majorScaleStudy(clef: Clef): WarmupExercise {
     'scales',
     'Major scale — one octave',
     notes,
-    repeat([EIGHTH], notes.length), // 15 eighths…
+    endOnQuarter(notes.length), // 14 eighths + a held quarter (no trailing rest)
     96,
-    'Even eighth notes, ascending and descending — smooth, connected, in tune.',
-    [EIGHTH], // …plus a rest to complete the second measure
+    'Even eighth notes, ascending and descending — land on the held tonic.',
+    [],
     ARBAN,
     majorSig(C), // C major — no accidentals
   )
@@ -427,10 +434,10 @@ function thirdsStudy(clef: Clef): WarmupExercise {
     'thirds',
     'Study in thirds',
     notes,
-    repeat([EIGHTH], notes.length),
+    endOnQuarter(notes.length),
     88,
     'Broken thirds up the scale — keep each pair even and connected.',
-    [EIGHTH],
+    [],
     ARBAN,
     majorSig(C),
   )
@@ -444,10 +451,10 @@ function minorScaleStudy(clef: Clef): WarmupExercise {
     'scales',
     'Natural minor scale — one octave',
     notes,
-    repeat([EIGHTH], notes.length),
+    endOnQuarter(notes.length),
     96,
     'C natural minor — even eighths up and down. The 3rd, 6th, and 7th sit in the key signature.',
-    [EIGHTH],
+    [],
     undefined, // generative — no provenance
     minorSig(C), // three flats (B♭ E♭ A♭)
   )
@@ -470,11 +477,12 @@ function scaleCycleEtude(clef: Clef): WarmupExercise {
   const events: RhythmEvent[] = []
   const spelled: SpelledNote[] = []
   for (const tonic of CYCLE_KEYS) {
-    for (const n of diatonicNotes(clef, tonic, MAJOR_INTERVALS, scaleUpDown())) {
-      events.push({ note: n, beats: EIGHTH })
+    const notes = diatonicNotes(clef, tonic, MAJOR_INTERVALS, scaleUpDown())
+    notes.forEach((n, i) => {
+      // each key: 14 eighths then a held quarter — two clean measures, no rest
+      events.push({ note: n, beats: i < notes.length - 1 ? EIGHTH : 1 })
       spelled.push(n)
-    }
-    events.push({ beats: EIGHTH }) // a breath between keys → two clean measures each
+    })
   }
   return {
     id: 'etude:scale-cycle',
@@ -506,6 +514,42 @@ function articulationEtude(clef: Clef): WarmupExercise {
     92,
     'Four measures of even single tonguing — stay light and relaxed; build endurance.',
   )
+}
+
+const F_MAJOR: Tonic = { letter: 'F', alter: 0 }
+const ARP_FIGURE = [0, 2, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 4, 2, 0] as const // broken F-major triad
+const SCALE_DOWN_UP = [7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7] as const
+
+/**
+ * An eight-bar F-major etude read continuously: four two-bar phrases — scale,
+ * thirds, arpeggio, scale — each in even eighths ending on a held quarter, under
+ * one key signature. A longer, single-key study (no forced line breaks) built
+ * in-house from the method's scale/arpeggio material.
+ */
+function fMajorEtude(clef: Clef): WarmupExercise {
+  const phrases = [scaleUpDown(), thirdsUp(), [...ARP_FIGURE], [...SCALE_DOWN_UP]]
+  const events: RhythmEvent[] = []
+  const spelled: SpelledNote[] = []
+  for (const degrees of phrases) {
+    const notes = diatonicNotes(clef, F_MAJOR, MAJOR_INTERVALS, degrees)
+    notes.forEach((n, i) => {
+      events.push({ note: n, beats: i < notes.length - 1 ? EIGHTH : 1 }) // phrase ends on a quarter
+      spelled.push(n)
+    })
+  }
+  return {
+    id: 'etude:fmajor',
+    category: 'etudes',
+    title: 'F major study — scales, thirds & arpeggio',
+    instruction: 'Eight continuous bars in F major — connect the phrases, breathe on the held notes.',
+    spelled,
+    midi: spelled.map((n) => n.midi),
+    playback: rhythmPlayback(events, 92),
+    rhythm: { events, meter: FOUR_FOUR },
+    transposable: 'octave',
+    source: ARBAN,
+    keySig: majorSig(F_MAJOR), // one flat, held across all eight bars
+  }
 }
 
 // ── Library ─────────────────────────────────────────────────────────────────
@@ -609,7 +653,7 @@ export function arbanStudyLibrary(clef: Clef): Record<WarmupCategory, WarmupExer
         ARBAN,
       ),
     ],
-    etudes: [scaleCycleEtude(clef), articulationEtude(clef)],
+    etudes: [fMajorEtude(clef), scaleCycleEtude(clef), articulationEtude(clef)],
   }
 }
 

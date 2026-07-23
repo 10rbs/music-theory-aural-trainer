@@ -73,22 +73,26 @@ describe('rhythmLayout — measures and bar lines', () => {
 })
 
 describe('rhythmLayout — wrapping onto systems', () => {
-  test('a long passage wraps onto multiple staff lines', () => {
-    // two 4/4 measures of dense eighths → one measure per line
-    const l = rhythmLayout(Array.from({ length: 16 }, () => note(0.5)), { beats: 4, unit: 4 })
+  // 48 eighths = six 4/4 measures — enough to wrap past the width target
+  const sixMeasures = () => rhythmLayout(Array.from({ length: 48 }, () => note(0.5)), { beats: 4, unit: 4 })
+
+  test('a long passage wraps onto multiple lines, packing several bars per line', () => {
+    const l = sixMeasures()
     expect(l.systems.length).toBeGreaterThan(1)
-    expect(glyphs(l)).toHaveLength(16)
+    expect(glyphs(l)).toHaveLength(48)
+    // bars now pack onto a line (an internal bar line) rather than one-per-line
+    expect(l.systems.some((s) => s.barlines.length >= 1)).toBe(true)
   })
 
   test('only the first system shows the time signature; every system has a clef', () => {
-    const l = rhythmLayout(Array.from({ length: 16 }, () => note(0.5)), { beats: 4, unit: 4 })
+    const l = sixMeasures()
+    expect(l.systems.length).toBeGreaterThan(1)
     expect(l.systems[0].showTimeSig).toBe(true)
     expect(l.systems.slice(1).every((s) => !s.showTimeSig)).toBe(true)
   })
 
   test('beam ids stay unique across systems', () => {
-    const l = rhythmLayout(Array.from({ length: 16 }, () => note(0.5)), { beats: 4, unit: 4 })
-    const ids = beams(l).map((b) => b.id)
+    const ids = beams(sixMeasures()).map((b) => b.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
 })
