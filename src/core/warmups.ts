@@ -17,6 +17,7 @@ import { transposeSpelled, type Interval } from './theory/transpose'
 import { melodic, sustained, type PlaybackSpec } from './playback/spec'
 import { rootMidi } from './register'
 import { type Clef } from './notation/staff'
+import { keySignature, type KeySignature } from './notation/key-signature'
 import { type Meter, type RhythmEvent } from './notation/rhythm'
 
 // The daily routine uses the first four; the deep-dive Studies page (M4.10) adds
@@ -125,6 +126,12 @@ export interface WarmupExercise {
   chordShort?: string
   /** rhythmic notation (articulation) — rendered by RhythmStaff instead of ScaleStaff */
   rhythm?: { events: RhythmEvent[]; meter: Meter }
+  /**
+   * Key signature for staves that should show one — a single signature, or one
+   * per measure for a passage that changes key (the scale-cycle etude). Absent
+   * means draw every accidental inline (chords, chromatic exercises).
+   */
+  keySig?: KeySignature | readonly KeySignature[]
   /** present on curated (Arban) items */
   source?: WarmupSource
 }
@@ -268,6 +275,10 @@ const FOUR_FOUR: Meter = { beats: 4, unit: 4 }
 
 const MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 10, 12] as const
 
+/** Key signature for a major / natural-minor scale in a key. */
+const majorSig = (t: Tonic): KeySignature => keySignature(t, { name: 'major', intervals: MAJOR_INTERVALS })
+const minorSig = (t: Tonic): KeySignature => keySignature(t, { name: 'minor', intervals: MINOR_INTERVALS })
+
 /**
  * Diatonic scale notes at the given degree indices, anchored to `tonic` in the
  * clef register. Index 7 is the octave tonic; indices ≥ 7 wrap into higher
@@ -370,6 +381,7 @@ function rhythmicStudy(
   instruction: string,
   trailingRests: readonly number[] = [],
   source?: WarmupSource,
+  keySig?: KeySignature,
 ): WarmupExercise {
   const events: RhythmEvent[] = [
     ...notes.map((n, i) => ({ note: n, beats: beats[i] })),
@@ -386,6 +398,7 @@ function rhythmicStudy(
     rhythm: { events, meter: FOUR_FOUR },
     transposable: 'octave',
     source,
+    keySig,
   }
 }
 
@@ -402,6 +415,7 @@ function majorScaleStudy(clef: Clef): WarmupExercise {
     'Even eighth notes, ascending and descending — smooth, connected, in tune.',
     [EIGHTH], // …plus a rest to complete the second measure
     ARBAN,
+    majorSig(C), // C major — no accidentals
   )
 }
 
@@ -418,6 +432,7 @@ function thirdsStudy(clef: Clef): WarmupExercise {
     'Broken thirds up the scale — keep each pair even and connected.',
     [EIGHTH],
     ARBAN,
+    majorSig(C),
   )
 }
 
@@ -431,8 +446,10 @@ function minorScaleStudy(clef: Clef): WarmupExercise {
     notes,
     repeat([EIGHTH], notes.length),
     96,
-    'C natural minor — even eighths up and down. Mind the lowered 3rd, 6th, and 7th.',
+    'C natural minor — even eighths up and down. The 3rd, 6th, and 7th sit in the key signature.',
     [EIGHTH],
+    undefined, // generative — no provenance
+    minorSig(C), // three flats (B♭ E♭ A♭)
   )
 }
 
@@ -464,13 +481,16 @@ function scaleCycleEtude(clef: Clef): WarmupExercise {
     category: 'etudes',
     title: 'Scale cycle — C · G · D · A',
     instruction:
-      'Four keys in a row, even eighths. Watch the accidentals — F♯ in G; F♯ C♯ in D; F♯ C♯ G♯ in A.',
+      'Four keys in a row, even eighths — each takes its own key signature (C, then 1, 2, 3 sharps).',
     spelled,
     midi: spelled.map((n) => n.midi),
     playback: rhythmPlayback(events, 100),
     rhythm: { events, meter: FOUR_FOUR },
     transposable: 'octave',
     source: ARBAN,
+    // one signature per measure; each key is two measures, so the signature
+    // changes every two — the renderer starts a fresh line at each change.
+    keySig: CYCLE_KEYS.flatMap((t) => [majorSig(t), majorSig(t)]),
   }
 }
 

@@ -7,6 +7,7 @@ import {
   type RhythmLayout,
 } from './rhythm'
 import type { StaffNoteInput } from './staff'
+import type { KeySignature } from './key-signature'
 
 // treble C4..C5 for pitched events
 const N = (letter: string, midi: number): StaffNoteInput => ({ letter, alter: 0, midi })
@@ -162,5 +163,49 @@ describe('rhythmLayout — a known 4/4 measure', () => {
     expect(s.glyphs[1].beamId).toBe(s.glyphs[2].beamId)
     expect(s.barlines).toHaveLength(0)
     expect(s.glyphs.every((g) => !g.isRest)).toBe(true)
+  })
+})
+
+describe('rhythmLayout — key signatures', () => {
+  const m44 = { beats: 4, unit: 4 } as const
+  const ONE_SHARP: KeySignature = { type: 'sharp', count: 1, letters: ['F'] }
+  const THREE_FLAT: KeySignature = { type: 'flat', count: 3, letters: ['B', 'E', 'A'] }
+  const NONE: KeySignature = { type: 'none', count: 0, letters: [] }
+  const Fsharp: StaffNoteInput = { letter: 'F', alter: 1, midi: 66 }
+  const Fnat: StaffNoteInput = { letter: 'F', alter: 0, midi: 65 }
+  const measure = (n: StaffNoteInput) => [note(1, n), note(1, C4), note(1, C4), note(1, C4)]
+
+  test('no signature: an F♯ draws its accidental inline; the system has none', () => {
+    const s = one(rhythmLayout(measure(Fsharp), m44))
+    expect(s.glyphs[0].accidental).toBe(1)
+    expect(s.keySig).toHaveLength(0)
+  })
+
+  test('with the signature, the covered F♯ is suppressed and drawn once after the clef', () => {
+    const s = one(rhythmLayout(measure(Fsharp), m44, 'treble', ONE_SHARP))
+    expect(s.glyphs[0].accidental).toBeNull() // covered by the signature
+    expect(s.keySig).toHaveLength(1)
+    expect(s.keySig[0]).toMatchObject({ letter: 'F', alter: 1 })
+  })
+
+  test('a natural against the signature draws a cancelling ♮ (accidental 0)', () => {
+    const s = one(rhythmLayout(measure(Fnat), m44, 'treble', ONE_SHARP))
+    expect(s.glyphs[0].accidental).toBe(0)
+  })
+
+  test('the signature reserves horizontal room (notes start further right)', () => {
+    const bare = one(rhythmLayout(measure(C4), m44)).glyphs[0].x
+    const keyed = one(rhythmLayout(measure(C4), m44, 'treble', THREE_FLAT)).glyphs[0].x
+    expect(keyed).toBeGreaterThan(bare)
+  })
+
+  test('a per-measure key change starts a fresh system carrying the new signature', () => {
+    const two = [...measure(C4), ...measure(Fsharp)] // C major, then G major
+    const l = rhythmLayout(two, m44, 'treble', [NONE, ONE_SHARP])
+    expect(l.systems).toHaveLength(2) // the change forces a line break
+    expect(l.systems[0].keySig).toHaveLength(0)
+    expect(l.systems[1].keySig).toHaveLength(1)
+    expect(l.systems[0].showTimeSig).toBe(true) // time sig on the first line only
+    expect(l.systems[1].showTimeSig).toBe(false)
   })
 })

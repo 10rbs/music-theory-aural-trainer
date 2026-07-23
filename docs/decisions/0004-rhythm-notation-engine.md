@@ -49,3 +49,15 @@ The first time we need to **ingest/render MusicXML etudes**, or hit
 cleanly, re-evaluate VexFlow/OSMD against extending `rhythm.ts` — and record the
 outcome as the next decision. `RhythmEvent` / `PlaybackSpec` were designed so
 either renderer can consume the same data.
+
+## Update log
+
+- **2026-07-22 (M4.12):** extended the engine with **key signatures** (reusing
+  `core/notation/key-signature.ts` from [0002](0002-key-signatures-and-transposition.md)):
+  `rhythmLayout` accepts a `KeySignature` or one per measure, reserves head-room
+  after the clef on every system, suppresses covered inline accidentals, and
+  **starts a fresh system at a key change** (so a keyed multi-section passage — the
+  scale-cycle etude — reads with each section's signature). Chosen over drawing a
+  mid-line key change (barline courtesy accidentals) as the bounded, testable
+  first cut; mid-line changes remain deferred with the rest of the engraving
+  edge-cases above.
