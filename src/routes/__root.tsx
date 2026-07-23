@@ -20,6 +20,7 @@ function RootLayout() {
         <nav>
           <Link to="/practice">Practice</Link>
           <Link to="/warmup">Warm-up</Link>
+          <Link to="/studies">Studies</Link>
         </nav>
         <div className="header-widgets">
           <TunerWidget />

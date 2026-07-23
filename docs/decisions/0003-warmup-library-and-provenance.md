@@ -48,3 +48,15 @@ iterate all attempts + kv. See `docs/ARCHITECTURE.md` (Storage).
 A shared/public library or user uploads are added (per-jurisdiction PD checks,
 upload isolation), or when rhythmic notation lands and articulation/etude
 categories join — re-confirm sourcing per new content.
+
+## Update log
+
+- **2026-07-22 (M4.10, Studies page):** sourcing re-confirmed for the new curated
+  studies (major scale, study in thirds, extended flexibility slur). All encode
+  standard method-shape content ourselves — our note data, our SVG — from the
+  public-domain 1864 original, with provenance on every item; still single-voice,
+  no tuplets/ties (within the bounded engine). Rules above unchanged. The
+  "generate the *entire* method" ask remains blocked on the engine features the
+  M5+ library trigger covers (triplets/ties/ornaments or MusicXML ingestion) plus
+  faithful per-exercise transcription — so the library stays modest and
+  representative for now.

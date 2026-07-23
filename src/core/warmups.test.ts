@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import {
+  STUDY_CATEGORIES,
   WARMUP_CATEGORIES,
+  arbanStudyLibrary,
   rekeyWarmup,
   shiftWarmup,
   warmupLibrary,
@@ -12,6 +14,10 @@ const names = (ex: WarmupExercise) =>
   ex.spelled.map((n) => n.letter + (n.alter === 1 ? '♯' : n.alter === -1 ? '♭' : ''))
 const find = (clef: 'treble' | 'bass', cat: keyof ReturnType<typeof warmupLibrary>, id: string) =>
   warmupLibrary(clef)[cat].find((e) => e.id === id)!
+const findStudy = (id: string) =>
+  Object.values(arbanStudyLibrary('treble'))
+    .flat()
+    .find((e) => e.id === id)!
 
 describe('warmupLibrary', () => {
   test('every category has exercises, keyed by the category ids', () => {
@@ -143,5 +149,59 @@ describe('Arban provenance', () => {
 
   test('generative exercises have no source', () => {
     expect(find('treble', 'arpeggios', 'arp:maj').source).toBeUndefined()
+  })
+})
+
+describe('arbanStudyLibrary — the deep-dive studies page', () => {
+  test('every study category has exercises, keyed by the category ids', () => {
+    const lib = arbanStudyLibrary('treble')
+    for (const c of STUDY_CATEGORIES) expect(lib[c.id].length).toBeGreaterThan(0)
+    expect(Object.keys(lib).sort()).toEqual(STUDY_CATEGORIES.map((c) => c.id).sort())
+  })
+
+  test('notation, playback, and midi line up for every study', () => {
+    for (const list of Object.values(arbanStudyLibrary('treble'))) {
+      for (const ex of list) {
+        expect(ex.spelled.map((n) => n.midi)).toEqual(ex.midi)
+        // playback includes only sounding notes (rests advance time silently)
+        expect(ex.playback.events.flatMap((e) => e.midi)).toEqual(ex.midi)
+      }
+    }
+  })
+
+  test('major scale study is a one-octave scale up and down, two measures + rest', () => {
+    const ex = findStudy('scale:major')
+    expect(names(ex)).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C', 'B', 'A', 'G', 'F', 'E', 'D', 'C'])
+    expect(ex.midi).toEqual([60, 62, 64, 65, 67, 69, 71, 72, 71, 69, 67, 65, 64, 62, 60])
+    expect(ex.rhythm!.meter).toEqual({ beats: 4, unit: 4 })
+    expect(ex.rhythm!.events).toHaveLength(16) // 15 eighths + a closing eighth rest
+    expect(ex.rhythm!.events.filter((e) => !e.note)).toHaveLength(1)
+    expect(ex.rhythm!.events.reduce((s, e) => s + e.beats, 0)).toBe(8) // two 4/4 measures
+    expect(ex.source?.year).toBe(1864)
+  })
+
+  test('study in thirds spells broken thirds and reaches the ninth (D above the octave)', () => {
+    const ex = findStudy('thirds:major')
+    expect(names(ex)).toEqual(['C', 'E', 'D', 'F', 'E', 'G', 'F', 'A', 'G', 'B', 'A', 'C', 'B', 'D', 'C'])
+    expect(ex.midi).toEqual([60, 64, 62, 65, 64, 67, 65, 69, 67, 71, 69, 72, 71, 74, 72])
+    expect(ex.midi.at(-2)).toBe(74) // multi-octave scaleNotes: the 9th degree, D5
+    expect(ex.source?.year).toBe(1864)
+  })
+
+  test('extended flexibility slur climbs to the fifth partial (D) and carries provenance', () => {
+    const ex = findStudy('slur:12345')
+    expect(ex.midi).toEqual([58, 70, 77, 82, 86, 82, 77, 70, 58])
+    expect(names(ex).at(4)).toBe('D') // 5th partial over B♭ = D6
+    expect(ex.source?.year).toBe(1864)
+  })
+
+  test('curated studies carry public-domain 1864 provenance; generative ones do not', () => {
+    const curated = ['scale:major', 'thirds:major', 'slur:12345', 'slur:arban', 'arp:arban']
+    for (const id of curated) {
+      const src = findStudy(id).source
+      expect(src?.publicDomain).toBe(true)
+      expect(src?.composer).toContain('Arban')
+    }
+    expect(findStudy('arp:maj').source).toBeUndefined()
   })
 })
