@@ -9,7 +9,7 @@ import { ExerciseCard } from './ExerciseCard'
 import { useStudyState } from './use-study-state'
 
 export function WorkoutsView() {
-  const { clef, octaves, keys, done, setShift, setKey, markDone } = useStudyState()
+  const { clef, octaves, keys, done, showKeySig, setShift, setKey, markDone } = useStudyState()
   const [workoutId, setWorkoutId] = useState<string>(WORKOUTS[0].id)
 
   const built = useMemo(() => buildWorkout(workoutId, clef), [workoutId, clef])
@@ -66,6 +66,7 @@ export function WorkoutsView() {
             octave={octaves[ex.id] ?? 0}
             keyOffset={keys[ex.id] ?? 0}
             done={done.has(ex.id)}
+            showKeySig={showKeySig}
             onOctave={setShift}
             onKey={setKey}
             onMarkDone={markDone}

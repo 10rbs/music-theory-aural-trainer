@@ -36,7 +36,8 @@ export function StaffWithControls({
   spelled: SpelledNote[]
   clef: Clef
   label: string
-  keySig?: KeySignature
+  /** a single key signature, or one per measure (rhythmic passages that change key) */
+  keySig?: KeySignature | readonly KeySignature[]
   /** when present, render rhythmic notation (RhythmStaff) instead of a scale run */
   rhythm?: { events: RhythmEvent[]; meter: Meter }
   octave: OctaveControl
@@ -70,9 +71,22 @@ export function StaffWithControls({
           </button>
         </div>
         {rhythm ? (
-          <RhythmStaff events={rhythm.events} meter={rhythm.meter} clef={clef} label={label} />
+          <RhythmStaff
+            events={rhythm.events}
+            meter={rhythm.meter}
+            clef={clef}
+            label={label}
+            keySig={keySig}
+          />
         ) : (
-          <ScaleStaff spelled={spelled} clef={clef} label={label} keySig={keySig} />
+          <ScaleStaff
+            spelled={spelled}
+            clef={clef}
+            label={label}
+            // a per-measure signature array only occurs on rhythmic passages,
+            // which take the RhythmStaff branch above; ScaleStaff gets a single one
+            keySig={Array.isArray(keySig) ? undefined : (keySig as KeySignature | undefined)}
+          />
         )}
       </div>
     </div>

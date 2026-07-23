@@ -18,6 +18,8 @@ export interface ExerciseCardProps {
   /** raw persisted key offset for this exercise */
   keyOffset: number
   done: boolean
+  /** render the key signature (false → draw accidentals inline) */
+  showKeySig: boolean
   onOctave: (id: string, next: number) => void
   onKey: (id: string, next: number) => void
   onMarkDone: (ex: WarmupExercise) => void
@@ -31,6 +33,7 @@ export function ExerciseCard({
   octave,
   keyOffset,
   done,
+  showKeySig,
   onOctave,
   onKey,
   onMarkDone,
@@ -59,6 +62,7 @@ export function ExerciseCard({
           spelled={ex.spelled}
           clef={clef}
           label={ex.title}
+          keySig={showKeySig ? ex.keySig : undefined}
           rhythm={ex.rhythm}
           octave={{
             value: shift,

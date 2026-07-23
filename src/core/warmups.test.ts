@@ -13,6 +13,7 @@ import {
   type WarmupExercise,
 } from './warmups'
 import { MAJOR_KEYS } from './theory/keys'
+import type { KeySignature } from './notation/key-signature'
 
 const names = (ex: WarmupExercise) =>
   ex.spelled.map((n) => n.letter + (n.alter === 1 ? '♯' : n.alter === -1 ? '♭' : ''))
@@ -264,6 +265,20 @@ describe('studies — new content, etudes, and workouts (M4.11)', () => {
     const r = resolveWarmup(cMaj, 'treble', 0, 9) // C → +9 → E♭
     expect(r.keyOffset).toBe(9)
     expect(r.ex.tonic).toEqual(MAJOR_KEYS[9])
+  })
+
+  test('minor scale study carries a three-flat key signature; major carries none', () => {
+    expect(findStudy('scale:minor').keySig).toEqual({ type: 'flat', count: 3, letters: ['B', 'E', 'A'] })
+    expect(findStudy('scale:major').keySig).toMatchObject({ type: 'none', count: 0 })
+  })
+
+  test('scale-cycle etude has a per-measure signature climbing C → 1 → 2 → 3 sharps', () => {
+    const sigs = findStudy('etude:scale-cycle').keySig as KeySignature[]
+    expect(sigs).toHaveLength(8) // one per measure, two measures per key
+    expect(sigs[0]).toMatchObject({ type: 'none', count: 0 }) // C
+    expect(sigs[2]).toMatchObject({ type: 'sharp', count: 1 }) // G
+    expect(sigs[4]).toMatchObject({ type: 'sharp', count: 2 }) // D
+    expect(sigs[6]).toMatchObject({ type: 'sharp', count: 3 }) // A
   })
 
   test('every workout resolves all of its items, in order', () => {

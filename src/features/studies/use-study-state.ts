@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { type WarmupExercise } from '../../core/warmups'
 import { type Clef } from '../../core/notation/staff'
 import { toLocalDateStr } from '../../core/streak'
+import { DEFAULT_PRACTICE_DISPLAY, type PracticeDisplay } from '../settings/SettingsWidget'
 import { settingsEvents, statsEvents, useStore } from '../stats/store-context'
 
 /** Persisted per-exercise shifts, keyed by exercise id. */
@@ -21,6 +22,8 @@ export interface StudyState {
   octaves: Shifts
   keys: Shifts
   done: Set<string>
+  /** whether to render key signatures (the shared practiceDisplay toggle) */
+  showKeySig: boolean
   setShift: (id: string, n: number) => void
   setKey: (id: string, n: number) => void
   markDone: (ex: WarmupExercise) => void
@@ -33,6 +36,7 @@ export function useStudyState(): StudyState {
   const [octaves, setOctaves] = useState<Shifts>({})
   const [keys, setKeys] = useState<Shifts>({})
   const [done, setDone] = useState<Set<string>>(new Set())
+  const [showKeySig, setShowKeySig] = useState(DEFAULT_PRACTICE_DISPLAY.keySignature)
 
   const completionKey = `study:${today}`
 
@@ -45,6 +49,9 @@ export function useStudyState(): StudyState {
       void store.getSetting<Clef>('clef', 'treble').then(setClef)
       void store.getSetting<Shifts>('studyOctaves', {}).then(setOctaves)
       void store.getSetting<Shifts>('studyKeys', {}).then(setKeys)
+      void store
+        .getSetting<PracticeDisplay>('practiceDisplay', DEFAULT_PRACTICE_DISPLAY)
+        .then((d) => setShowKeySig({ ...DEFAULT_PRACTICE_DISPLAY, ...d }.keySignature))
     }
     load()
     settingsEvents.addEventListener('settings', load)
@@ -89,5 +96,5 @@ export function useStudyState(): StudyState {
     [done, store, completionKey, today],
   )
 
-  return { clef, octaves, keys, done, setShift, setKey, markDone }
+  return { clef, octaves, keys, done, showKeySig, setShift, setKey, markDone }
 }

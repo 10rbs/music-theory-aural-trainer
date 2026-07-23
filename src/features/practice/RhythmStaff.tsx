@@ -14,6 +14,7 @@ import {
   type RhythmGlyph,
   type RhythmSystem,
 } from '../../core/notation/rhythm'
+import { type KeySignature } from '../../core/notation/key-signature'
 import { type Clef } from '../../core/notation/staff'
 import { accidentalGlyph } from '../../core/theory/keys'
 import { ClefGlyph, CLEF_OVERHANG } from './staff-glyphs'
@@ -24,7 +25,6 @@ const SYSTEM_GAP = 16 // px between stacked staff lines
 const HEAD_RX = 6
 const HEAD_RY = 4.2
 const STEM_DX = 5 // stem offset from head center
-const TS_X = 48 // time-signature x — clear of the clef (incl. the bass-clef dots)
 
 const beamMap = (sys: RhythmSystem) => new Map(sys.beams.map((b) => [b.id, b]))
 
@@ -36,13 +36,15 @@ export function RhythmStaff({
   meter,
   clef = 'treble',
   label,
+  keySig,
 }: {
   events: RhythmEvent[]
   meter: Meter
   clef?: Clef
   label: string
+  keySig?: KeySignature | readonly KeySignature[]
 }) {
-  const { systems, width } = rhythmLayout(events, meter, clef)
+  const { systems, width } = rhythmLayout(events, meter, clef, keySig)
 
   // one vertical band, sized to the tallest content across every system, so all
   // staff lines are evenly spaced
@@ -100,12 +102,20 @@ function System({
       </g>
       <ClefGlyph clef={clef} y={y} />
 
+      <g className="staff-keysig">
+        {sys.keySig.map((a, i) => (
+          <text key={i} className="staff-accidental" x={a.x} y={y(a.step) + 4}>
+            {accidentalGlyph(a.alter)}
+          </text>
+        ))}
+      </g>
+
       {sys.showTimeSig && (
         <>
-          <text className="staff-timesig" x={TS_X} y={y(6) + 4}>
+          <text className="staff-timesig" x={sys.timeSigX} y={y(6) + 4}>
             {meter.beats}
           </text>
-          <text className="staff-timesig" x={TS_X} y={y(2) + 4}>
+          <text className="staff-timesig" x={sys.timeSigX} y={y(2) + 4}>
             {meter.unit}
           </text>
         </>
@@ -157,9 +167,9 @@ function Note({
       {g.ledgerSteps.map((s) => (
         <line key={s} className="staff-ledger" x1={cx - 10} y1={y(s)} x2={cx + 10} y2={y(s)} />
       ))}
-      {g.alter !== 0 && (
+      {g.accidental !== null && (
         <text className="staff-accidental" x={cx - 14} y={cy + 4}>
-          {accidentalGlyph(g.alter)}
+          {g.accidental === 0 ? '♮' : accidentalGlyph(g.accidental)}
         </text>
       )}
       <ellipse

@@ -15,6 +15,13 @@
 // docs/decisions/0004.
 
 import { staffLayout, type Clef, type StaffNoteInput } from './staff'
+import {
+  inlineAlter,
+  keySignatureLayout,
+  signatureMap,
+  type KeySignature,
+  type SignatureAccidental,
+} from './key-signature'
 
 export interface Meter {
   beats: number
@@ -38,7 +45,14 @@ export interface RhythmGlyph {
   isRest: boolean
   /** diatonic steps above the clef bottom line (rest sits at the middle line) */
   step: number
+  /** the note's pitch alteration (−1 flat … +1 sharp); 0 for naturals/rests */
   alter: number
+  /**
+   * The inline accidental to draw, or `null` when none is needed — a key
+   * signature already in force can suppress it (or demand a cancelling ♮, drawn
+   * as accidental 0). Without a signature this is `alter` when non-zero, else null.
+   */
+  accidental: number | null
   value: number
   dots: 0 | 1
   stemUp: boolean
@@ -70,6 +84,15 @@ export interface RhythmSystem {
   width: number
   /** the time signature is drawn on the first system only */
   showTimeSig: boolean
+  /** key-signature accidentals drawn after the clef on this system (with x) */
+  keySig: PositionedAccidental[]
+  /** x for the time signature, placed after the clef and any key signature */
+  timeSigX: number
+}
+
+/** A key-signature accidental with its horizontal position on the system. */
+export interface PositionedAccidental extends SignatureAccidental {
+  x: number
 }
 
 export interface RhythmLayout {
@@ -96,7 +119,35 @@ const MIDDLE = 4 // middle staff line
 const STEM_STEPS = 6 // ~3 line-spaces
 const SECONDARY_OFFSET = 1.6
 
-const systemLeft = (first: boolean) => CLEF_PAD + (first ? TIMESIG_PAD : 0)
+const SIG_DX = 9 // px between key-signature accidentals
+const SIG_PAD = 6 // gap after the key signature, before the time sig / first note
+const TS_X_PAD = 4 // time-signature x past the clef (+ any signature)
+
+const NONE_SIG: KeySignature = { type: 'none', count: 0, letters: [] }
+
+/** Same key signature? (by type + altered letters, in order) */
+const sigEqual = (a: KeySignature, b: KeySignature) =>
+  a.type === b.type &&
+  a.letters.length === b.letters.length &&
+  a.letters.every((l, i) => l === b.letters[i])
+
+/** The key signature in force for measure `i` (a single signature covers all). */
+function resolveSig(
+  keySig: KeySignature | readonly KeySignature[] | undefined,
+  i: number,
+): KeySignature {
+  if (!keySig) return NONE_SIG
+  if (Array.isArray(keySig)) return keySig[i] ?? keySig[keySig.length - 1] ?? NONE_SIG
+  return keySig as KeySignature
+}
+
+/** Clef + key-signature geometry at the head of a system. */
+function systemHead(sig: KeySignature, clef: Clef, first: boolean) {
+  const accs = keySignatureLayout(sig, clef)
+  const keySig: PositionedAccidental[] = accs.map((a, i) => ({ ...a, x: CLEF_PAD + i * SIG_DX + 4 }))
+  const sigEnd = accs.length ? CLEF_PAD + accs.length * SIG_DX + SIG_PAD : CLEF_PAD
+  return { keySig, left: sigEnd + (first ? TIMESIG_PAD : 0), timeSigX: sigEnd + TS_X_PAD }
+}
 
 const VALUE_TABLE: readonly [number, number, 0 | 1][] = [
   [4, 1, 0],
@@ -135,6 +186,7 @@ export function rhythmLayout(
   events: readonly RhythmEvent[],
   meter: Meter,
   clef: Clef = 'treble',
+  keySig?: KeySignature | readonly KeySignature[],
 ): RhythmLayout {
   const mBeats = measureBeats(meter)
   const compound = meter.unit === 8 && meter.beats % 3 === 0
@@ -155,25 +207,30 @@ export function rhythmLayout(
   }
   if (cur.length) measures.push(cur)
 
+  // the key signature in force per measure (drives inline suppression + breaks)
+  const sigs = measures.map((_, i) => resolveSig(keySig, i))
+
   // lay each measure out locally (x from 0); beam ids stay unique across the piece
   let beamBase = 0
-  const measureLayouts = measures.map((evs) => {
-    const ml = layoutMeasure(evs, groupSize, clef, beamBase)
+  const measureLayouts = measures.map((evs, i) => {
+    const ml = layoutMeasure(evs, groupSize, clef, beamBase, signatureMap(sigs[i]))
     beamBase += ml.beams.length
     return ml
   })
 
-  // pack measures onto systems that fit TARGET_WIDTH (at least one measure each)
+  // pack measures onto systems that fit TARGET_WIDTH (at least one measure each);
+  // a key-signature change also starts a fresh system so the new signature shows.
   const systems: RhythmSystem[] = []
-  let bucket: MeasureLayout[] = []
+  let bucket: { m: MeasureLayout; sig: KeySignature }[] = []
   const flush = () => {
     if (!bucket.length) return
     const first = systems.length === 0
-    let x = systemLeft(first)
+    const head = systemHead(bucket[0].sig, clef, first)
+    let x = head.left
     const glyphs: RhythmGlyph[] = []
     const beams: Beam[] = []
     const barlines: number[] = []
-    bucket.forEach((m, mi) => {
+    bucket.forEach(({ m }, mi) => {
       const dx = x
       for (const g of m.glyphs) glyphs.push({ ...g, x: g.x + dx })
       for (const b of m.beams) {
@@ -190,16 +247,27 @@ export function rhythmLayout(
         x += BARLINE_GAP
       }
     })
-    systems.push({ glyphs, beams, barlines, width: x + TRAIL_PAD, showTimeSig: first })
+    systems.push({
+      glyphs,
+      beams,
+      barlines,
+      width: x + TRAIL_PAD,
+      showTimeSig: first,
+      keySig: head.keySig,
+      timeSigX: head.timeSigX,
+    })
     bucket = []
   }
 
-  for (const m of measureLayouts) {
-    const left = systemLeft(systems.length === 0)
-    const content = bucket.reduce((s, b) => s + b.width, 0) + Math.max(0, bucket.length - 1) * BARLINE_GAP
+  for (let i = 0; i < measureLayouts.length; i++) {
+    const m = measureLayouts[i]
+    const sig = sigs[i]
+    if (bucket.length && !sigEqual(sig, bucket[0].sig)) flush() // key change → new line
+    const left = systemHead(bucket.length ? bucket[0].sig : sig, clef, systems.length === 0).left
+    const content = bucket.reduce((s, b) => s + b.m.width, 0) + Math.max(0, bucket.length - 1) * BARLINE_GAP
     const added = (bucket.length ? BARLINE_GAP : 0) + m.width
     if (bucket.length && left + content + added + TRAIL_PAD > TARGET_WIDTH) flush()
-    bucket.push(m)
+    bucket.push({ m, sig })
   }
   flush()
 
@@ -213,6 +281,7 @@ function layoutMeasure(
   groupSize: number,
   clef: Clef,
   beamBase: number,
+  sigMap: Map<string, number>,
 ): MeasureLayout {
   const glyphs: RhythmGlyph[] = []
   const groupKey: number[] = []
@@ -223,17 +292,20 @@ function layoutMeasure(
     const group = Math.floor(pos / groupSize + EPS)
     let step = MIDDLE
     let alter = 0
+    let accidental: number | null = null
     let ledgerSteps: number[] = []
     if (ev.note) {
       const [sl] = staffLayout([ev.note], clef)
       step = sl.step
       alter = ev.note.alter
       ledgerSteps = sl.ledgerSteps
+      accidental = inlineAlter(sigMap, ev.note) // suppressed when the signature covers it
     }
     glyphs.push({
       isRest: !ev.note,
       step,
       alter,
+      accidental,
       value: nv.value,
       dots: nv.dots,
       stemUp: step < MIDDLE,

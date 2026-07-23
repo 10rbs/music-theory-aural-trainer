@@ -9,7 +9,7 @@ import { ExerciseCard } from './ExerciseCard'
 import { useStudyState } from './use-study-state'
 
 export function StudiesView() {
-  const { clef, octaves, keys, done, setShift, setKey, markDone } = useStudyState()
+  const { clef, octaves, keys, done, showKeySig, setShift, setKey, markDone } = useStudyState()
   const [cat, setCat] = useState<WarmupCategory>(STUDY_CATEGORIES[0].id)
 
   const library = useMemo(() => arbanStudyLibrary(clef), [clef])
@@ -73,6 +73,7 @@ export function StudiesView() {
         octave={octaves[baseEx.id] ?? 0}
         keyOffset={keys[baseEx.id] ?? 0}
         done={done.has(baseEx.id)}
+        showKeySig={showKeySig}
         onOctave={setShift}
         onKey={setKey}
         onMarkDone={markDone}
