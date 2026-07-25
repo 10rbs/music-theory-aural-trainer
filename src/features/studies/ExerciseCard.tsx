@@ -49,10 +49,31 @@ export function ExerciseCard({
   return (
     <div className={`practice-item studies-detail${done ? ' done' : ''}`}>
       <div className="practice-info">
-        <h4 className="warmup-title">
-          {index !== undefined && <span className="exercise-num">{index}. </span>}
-          {ex.title}
-        </h4>
+        <div className="exercise-head">
+          <h4 className="warmup-title">
+            {index !== undefined && <span className="exercise-num">{index}. </span>}
+            {ex.title}
+          </h4>
+          <div className="exercise-controls">
+            <button
+              className="icon-btn play"
+              onClick={() => playSpec(ex.playback)}
+              aria-label={`Play ${ex.title}`}
+              title="Play"
+            >
+              <span aria-hidden>▶</span>
+            </button>
+            <button
+              className={`icon-btn check${done ? ' is-done' : ''}`}
+              onClick={() => onMarkDone(ex)}
+              disabled={done}
+              aria-label={done ? 'Completed' : 'Mark done'}
+              title={done ? 'Done' : 'Mark done'}
+            >
+              <span aria-hidden>{done ? '✓' : '○'}</span>
+            </button>
+          </div>
+        </div>
         {ex.source && (
           <p className="warmup-source">
             {ex.source.composer} · {ex.source.year} · public domain
@@ -82,18 +103,6 @@ export function ExerciseCard({
           }
         />
         {ex.instruction && <p className="warmup-instruction">{ex.instruction}</p>}
-      </div>
-      <div className="practice-actions">
-        <button className="tap-btn" onClick={() => playSpec(ex.playback)}>
-          ▶ Listen
-        </button>
-        <button
-          className={`done-btn${done ? ' is-done' : ''}`}
-          onClick={() => onMarkDone(ex)}
-          disabled={done}
-        >
-          {done ? '✓ Done' : 'Mark done'}
-        </button>
       </div>
     </div>
   )
