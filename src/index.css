@@ -538,6 +538,76 @@ input[type='range'] {
   font-size: 0.98rem;
 }
 
+/* Study / workout card: title on the left, a compact play + done pair on the
+   right, so the notation below gets the full card width instead of sharing it
+   with a tall action column. */
+.exercise-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exercise-controls {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.icon-btn.play {
+  color: var(--accent);
+}
+
+.icon-btn.play.is-playing {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+.icon-btn.check.is-done {
+  color: var(--good);
+  border-color: var(--good);
+}
+
+.icon-btn:disabled {
+  cursor: default;
+}
+
+/* Full-width notation: stack the card and let the staff use the whole width. */
+.practice-item.studies-detail {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.studies-detail .staff-block {
+  max-width: 100%;
+}
+
+.studies-detail .scale-staff {
+  max-width: 480px;
+}
+
 .warmup-source {
   margin: 0 0 4px;
   font-size: 0.72rem;
