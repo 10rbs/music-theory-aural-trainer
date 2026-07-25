@@ -574,6 +574,12 @@ input[type='range'] {
   color: var(--accent);
 }
 
+.icon-btn.play.is-playing {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .icon-btn:hover:not(:disabled) {
   background: var(--surface);
   border-color: var(--accent);

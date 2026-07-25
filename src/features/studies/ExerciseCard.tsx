@@ -7,8 +7,8 @@
 import { resolveWarmup, type WarmupExercise } from '../../core/warmups'
 import { type Clef } from '../../core/notation/staff'
 import { tonicName } from '../../core/theory/keys'
-import { playSpec } from '../../shell/audio/synth'
 import { StaffWithControls } from '../practice/StaffWithControls'
+import { togglePlayback, usePlayingId } from './audio-player'
 
 export interface ExerciseCardProps {
   base: WarmupExercise
@@ -45,6 +45,7 @@ export function ExerciseCard({
     octave,
     keyOffset,
   )
+  const isPlaying = usePlayingId() === base.id
 
   return (
     <div className={`practice-item studies-detail${done ? ' done' : ''}`}>
@@ -56,12 +57,12 @@ export function ExerciseCard({
           </h4>
           <div className="exercise-controls">
             <button
-              className="icon-btn play"
-              onClick={() => playSpec(ex.playback)}
-              aria-label={`Play ${ex.title}`}
-              title="Play"
+              className={`icon-btn play${isPlaying ? ' is-playing' : ''}`}
+              onClick={() => togglePlayback(base.id, ex.playback)}
+              aria-label={isPlaying ? 'Pause' : `Play ${ex.title}`}
+              title={isPlaying ? 'Pause' : 'Play'}
             >
-              <span aria-hidden>▶</span>
+              <span aria-hidden>{isPlaying ? '⏸' : '▶'}</span>
             </button>
             <button
               className={`icon-btn check${done ? ' is-done' : ''}`}
