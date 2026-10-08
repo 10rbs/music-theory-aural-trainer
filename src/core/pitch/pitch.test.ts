@@ -74,7 +74,7 @@ describe('detectPitch', () => {
 
 describe('freqToNote', () => {
   test('440 Hz → A4, 0 cents', () => {
-    expect(freqToNote(440)).toEqual({ midi: 69, name: 'A4', cents: 0 })
+    expect(freqToNote(440)).toEqual({ midi: 69, name: 'A4', cents: 0, exactCents: 0 })
   })
 
   test('detuned: 445 Hz → A4 about +20 cents', () => {

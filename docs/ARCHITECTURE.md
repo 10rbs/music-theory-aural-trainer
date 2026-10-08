@@ -40,7 +40,9 @@ src/
     exercises/     exercise contract, registry, per-drill generators+graders, seeded RNG
     playback/      PlaybackSpec types + builders (notes+beats+bpm → timed events)
     pitch/         detect.ts (autocorrelation/MPM on Float32Array), cents.ts,
-                   history.ts (pitch-history graph math)                        (M3/M4.5)
+                   history.ts (pitch-history graph math)                        (M3/M4.5),
+                   level.ts (frame dB + envelope shapes), notes.ts (note-tracker
+                   reducer + per-note summaries/ratings)                       (M6.1)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
     notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6),
                    key-signature.ts (signature accidentals + inline suppression) (M4.7),
@@ -56,10 +58,13 @@ src/
     audio/         context (lazy AudioContext, resume-on-gesture), synth,
                    scheduler (lookahead driver), mic (M3), drone (M4.5)
     storage/       ProgressStore interface, idb-store, migrate-v0
-  features/        drills/, tuner/, metronome/, practice/ (ScaleStaff +
+  features/        session/ (home practice screen: timeline + note report, M6.1),
+                   drills/, tuner/ (incl. tuner-engine — shared mic/analysis
+                   context), metronome/, practice/ (ScaleStaff +
                    RhythmStaff + shared staff-glyphs + StaffWithControls, shared
                    with warmup/), warmup/, settings/, stats/
-  routes/          __root, index, drill.$exerciseId, practice, warmup
+  routes/          __root, index (practice session), exercises (old dashboard),
+                   drill.$exerciseId, practice, warmup, studies, workouts
   components/      shared primitives (DropWidget — header pill + drop-down panel)
 ```
 
@@ -135,7 +140,9 @@ def and renders the component matching its `interaction`.
   `detectPitch` in core.
 - Tuner and metronome are header widgets mounted in the root layout
   (`routes/__root.tsx`), so their audio keeps running across route changes
-  (M4.5). The drone (`shell/audio/drone.ts`) is a single sustained oscillator;
+  (M4.5). Since M6.1 the mic session and per-frame analysis (pitch, level,
+  note tracker) live in `TunerEngineProvider` (root layout), shared by the
+  header widget and the home practice screen — one mic session, never two. The drone (`shell/audio/drone.ts`) is a single sustained oscillator;
   note switches glide frequency instead of restarting.
 
 ## Deployment

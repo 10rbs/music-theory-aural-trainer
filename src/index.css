@@ -12,6 +12,7 @@
   --accent: #4a67d8;
   --good: #257a52;
   --bad: #c23a44;
+  --warn: #b26a00;
   color-scheme: light;
 }
 
@@ -25,6 +26,7 @@
   --accent: #6c8cff;
   --good: #4caf7d;
   --bad: #e5636b;
+  --warn: #e0a040;
   color-scheme: dark;
 }
 
@@ -66,7 +68,8 @@ h1 {
 
 nav {
   display: flex;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 6px 14px;
 }
 
 nav a {
@@ -1053,6 +1056,7 @@ input[type='range'] {
 
 .header-widgets {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -1336,4 +1340,205 @@ circle.pitch-trace.in-tune {
   font-size: 0.8rem;
   margin: 8px 0 10px;
   min-height: 1.2em;
+}
+
+/* Practice session (home): tuner + shape timeline + note report (M6.1) */
+
+.session .tuner-gate {
+  padding: 48px 0 24px;
+}
+
+.tuner-readout.large .tuner-note {
+  font-size: 4rem;
+  min-height: 4.6rem;
+}
+
+.session-timeline {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 4px 0 16px;
+}
+
+.session-timeline .lane-bg {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.session-timeline .lane-label {
+  fill: var(--text-dim);
+  font-size: 13px;
+}
+
+.session-timeline polyline.pitch-trace {
+  stroke-width: 2.5;
+}
+
+.shape-center {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.shape-fill {
+  fill: var(--accent);
+  fill-opacity: 0.55;
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.note-mark rect {
+  fill: var(--surface);
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.note-mark text {
+  fill: currentColor;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.note-mark.selected rect {
+  stroke-width: 2;
+}
+
+.rating-good {
+  color: var(--good);
+}
+
+.rating-ok {
+  color: var(--warn);
+}
+
+.rating-off {
+  color: var(--bad);
+}
+
+.note-report {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.note-report.empty {
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.note-report-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.note-report-head h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.note-report-meta {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.note-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.note-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-label {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.rating-good .rating-dot {
+  background: var(--good);
+}
+
+.rating-ok .rating-dot {
+  background: var(--warn);
+}
+
+.rating-off .rating-dot {
+  background: var(--bad);
+}
+
+.metric-value {
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-note {
+  font-size: 0.8rem;
+}
+
+.note-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.note-chip {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.note-chip.selected {
+  color: var(--surface);
+}
+
+.note-chip.selected.rating-good {
+  background: var(--good);
+}
+
+.note-chip.selected.rating-ok {
+  background: var(--warn);
+}
+
+.note-chip.selected.rating-off {
+  background: var(--bad);
+}
+
+.session-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.session-a4 {
+  color: var(--text-dim);
+  font-size: 0.85rem;
 }
