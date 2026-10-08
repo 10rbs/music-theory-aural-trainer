@@ -7,6 +7,8 @@ export interface NoteReading {
   midi: number
   name: string // e.g. "A4"
   cents: number // −50..+50 offset from the named note
+  /** Unrounded cents — for averaging across frames (note summaries). */
+  exactCents: number
 }
 
 export function freqToNote(freq: number, a4 = 440): NoteReading | null {
@@ -18,5 +20,6 @@ export function freqToNote(freq: number, a4 = 440): NoteReading | null {
     midi,
     name: midiToName(midi),
     cents: Math.round((midiFloat - midi) * 100),
+    exactCents: (midiFloat - midi) * 100,
   }
 }

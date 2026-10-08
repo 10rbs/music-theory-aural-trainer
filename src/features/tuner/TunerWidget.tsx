@@ -1,65 +1,41 @@
 import { useEffect, useRef, useState } from 'react'
-import { detectPitch } from '../../core/pitch/detect'
-import { freqToNote } from '../../core/pitch/cents'
-import { pushReading, type PitchSample } from '../../core/pitch/history'
+import { IN_TUNE_CENTS } from '../../core/pitch/history'
 import { CHROMATIC_PCS, FIFTHS_PCS, NOTE_NAMES, midiToFreq, pitchClassMidi } from '../../core/theory/notes'
-import { startMic, type MicSession } from '../../shell/audio/mic'
 import { startDrone, type Drone } from '../../shell/audio/drone'
 import { playFreq } from '../../shell/audio/synth'
 import { ensureAudioContext } from '../../shell/audio/context'
 import { DropWidget } from '../../components/DropWidget'
 import { useStore } from '../stats/store-context'
-import { PitchGraph, GRAPH_WINDOW_MS } from './PitchGraph'
+import { PitchGraph } from './PitchGraph'
 import { NoteCircle } from './NoteCircle'
-
-type MicState = 'idle' | 'requesting' | 'active' | 'denied' | 'unavailable'
+import { MicGate, TunerReadout } from './TunerReadout'
+import { useTunerEngine } from './tuner-engine'
 
 const A4_OPTIONS = [438, 439, 440, 441, 442, 443]
-const SMOOTHING = 0.35 // EMA factor for the cents needle
-const HOLD_FRAMES = 12 // keep last reading briefly through gaps between notes
 const OCTAVES = [2, 3, 4, 5]
 const DEFAULT_OCTAVE = 3
-
-interface Reading {
-  midi: number
-  name: string
-  cents: number
-}
 
 type CircleMode = 'chromatic' | 'fifths'
 
 export function TunerWidget() {
   const store = useStore()
-  const [micState, setMicState] = useState<MicState>('idle')
-  const [a4, setA4] = useState(440)
-  const [reading, setReading] = useState<Reading | null>(null)
-  const [history, setHistory] = useState<PitchSample[]>([])
-  const [graphNow, setGraphNow] = useState(0)
+  const engine = useTunerEngine()
+  const { micState, a4, reading } = engine
   const [expanded, setExpanded] = useState(false)
   const [dronePc, setDronePc] = useState<number | null>(null)
   const [octave, setOctave] = useState(DEFAULT_OCTAVE)
   const [circleMode, setCircleMode] = useState<CircleMode>('chromatic')
 
-  const sessionRef = useRef<MicSession | null>(null)
   const droneRef = useRef<Drone | null>(null)
-  const a4Ref = useRef(a4)
-  a4Ref.current = a4
-  const smoothedCents = useRef<number | null>(null)
-  const silentFrames = useRef(0)
-  const historyRef = useRef<PitchSample[]>([])
 
   useEffect(() => {
-    void store.getSetting('a4', 440).then(setA4)
     void store.getSetting('droneOctave', DEFAULT_OCTAVE).then((o) => {
       if (OCTAVES.includes(o)) setOctave(o)
     })
     void store.getSetting<CircleMode>('circleMode', 'chromatic').then((m) => {
       if (m === 'chromatic' || m === 'fifths') setCircleMode(m)
     })
-    return () => {
-      sessionRef.current?.stop()
-      droneRef.current?.stop()
-    }
+    return () => droneRef.current?.stop()
   }, [store])
 
   const droneFreq = (pc: number, oct: number, ref: number) =>
@@ -70,8 +46,7 @@ export function TunerWidget() {
   }
 
   const changeA4 = (value: number) => {
-    setA4(value)
-    void store.setSetting('a4', value)
+    engine.setA4(value)
     retune(octave, value)
   }
 
@@ -104,51 +79,12 @@ export function TunerWidget() {
     setDronePc(pc)
   }
 
-  const enable = async () => {
-    setMicState('requesting')
+  const enable = () => {
     setExpanded(true) // surface the privacy note / any permission error
-    try {
-      sessionRef.current = await startMic((buf, sampleRate) => {
-        const t = performance.now()
-        const pitch = detectPitch(buf, sampleRate)
-        if (!pitch) {
-          if (++silentFrames.current > HOLD_FRAMES) {
-            smoothedCents.current = null
-            setReading(null)
-          }
-          setGraphNow(t) // keep the trace scrolling through silence
-          return
-        }
-        silentFrames.current = 0
-        const note = freqToNote(pitch.freq, a4Ref.current)
-        if (!note) return
-        smoothedCents.current =
-          smoothedCents.current === null
-            ? note.cents
-            : smoothedCents.current + SMOOTHING * (note.cents - smoothedCents.current)
-        const cents = Math.round(smoothedCents.current)
-        historyRef.current = pushReading(historyRef.current, { t, cents }, t, GRAPH_WINDOW_MS)
-        setReading({ midi: note.midi, name: note.name, cents })
-        setHistory(historyRef.current)
-        setGraphNow(t)
-      })
-      setMicState('active')
-    } catch (e) {
-      setMicState((e as Error).message === 'denied' ? 'denied' : 'unavailable')
-    }
+    void engine.start()
   }
 
-  const disable = () => {
-    sessionRef.current?.stop()
-    sessionRef.current = null
-    smoothedCents.current = null
-    historyRef.current = []
-    setMicState('idle')
-    setReading(null)
-    setHistory([])
-  }
-
-  const inTune = reading !== null && Math.abs(reading.cents) <= 5
+  const inTune = reading !== null && Math.abs(reading.cents) <= IN_TUNE_CENTS
   const micActive = micState === 'active'
 
   const pillText = micActive
@@ -166,7 +102,7 @@ export function TunerWidget() {
         </>
       }
       active={micActive || dronePc !== null}
-      onToggle={micActive ? disable : () => void enable()}
+      onToggle={micActive ? engine.stop : enable}
       expanded={expanded}
       setExpanded={(v) => {
         // The expand click is a user gesture — warm the AudioContext so
@@ -178,59 +114,13 @@ export function TunerWidget() {
       panelLabel="Tuner panel"
       panelClassName="tuner-panel"
     >
-      {!micActive && (
-        <div className="tuner-gate">
-          <p className="tagline">
-            The tuner listens through your microphone. Audio is processed entirely on this
-            device — nothing is recorded or sent anywhere.
-          </p>
-          {micState === 'denied' && (
-            <p className="tuner-error">
-              Microphone access was blocked. Allow it in your browser's site settings (the
-              icon next to the address bar), then try again.
-            </p>
-          )}
-          {micState === 'unavailable' && (
-            <p className="tuner-error">No microphone found, or it couldn't be started.</p>
-          )}
-          <button className="play-btn panel-play" onClick={() => void enable()} disabled={micState === 'requesting'}>
-            {micState === 'requesting' ? 'Requesting…' : '🎤 Enable microphone'}
-          </button>
-        </div>
-      )}
+      {!micActive && <MicGate micState={micState} onEnable={enable} />}
 
       {micActive && (
         <div className="tuner-active">
-          <div className={`tuner-note${inTune ? ' in-tune' : ''}`}>
-            {reading ? reading.name : '–'}
-          </div>
-
-          <div className="tuner-scale">
-            <div className="tuner-ticks">
-              {[-50, -25, 0, 25, 50].map((t) => (
-                <span key={t} className={`tuner-tick${t === 0 ? ' zero' : ''}`}>
-                  {t > 0 ? `+${t}` : t}
-                </span>
-              ))}
-            </div>
-            <div className="tuner-track">
-              <div
-                className={`tuner-needle${inTune ? ' in-tune' : ''}`}
-                style={{
-                  left: `${50 + Math.max(-50, Math.min(50, reading?.cents ?? 0))}%`,
-                  opacity: reading ? 1 : 0.25,
-                }}
-              />
-              <div className="tuner-center" />
-            </div>
-            <div className="tuner-cents">
-              {reading ? `${reading.cents > 0 ? '+' : ''}${reading.cents} cents` : 'Play a note'}
-            </div>
-          </div>
-
-          <PitchGraph samples={history} now={graphNow} />
-
-          <button className="tap-btn tuner-stop" onClick={disable}>
+          <TunerReadout reading={reading} />
+          <PitchGraph samples={engine.pitchHistory} now={engine.now} />
+          <button className="tap-btn tuner-stop" onClick={engine.stop}>
             Stop listening
           </button>
         </div>

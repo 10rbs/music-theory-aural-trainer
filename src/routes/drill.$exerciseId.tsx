@@ -15,7 +15,7 @@ function DrillPage() {
       <section>
         <h2>Unknown drill</h2>
         <p className="tagline">
-          No exercise named “{exerciseId}”. <Link to="/">Back home</Link>
+          No exercise named “{exerciseId}”. <Link to="/exercises">Back to exercises</Link>
         </p>
       </section>
     )
