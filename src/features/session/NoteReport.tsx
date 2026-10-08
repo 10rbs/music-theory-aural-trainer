@@ -1,6 +1,8 @@
 import { rateNote, type NoteSummary, type Rating } from '../../core/pitch/notes'
 import { midiToName } from '../../core/theory/notes'
 
+const MAX_CHIPS = 8
+
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`
 
 function tuningWord(avgCents: number, rating: Rating) {
@@ -80,7 +82,7 @@ export function NoteReport({
       </div>
       {notes.length > 1 && (
         <div className="note-chips" role="group" aria-label="Recent notes">
-          {notes.map((n) => {
+          {notes.slice(0, MAX_CHIPS).map((n) => {
             const c = Math.round(n.avgCents)
             return (
               <button
