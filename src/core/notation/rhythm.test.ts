@@ -61,6 +61,12 @@ describe('rhythmLayout — measures and bar lines', () => {
     expect(s.barlines[0]).toBeLessThan(s.glyphs[4].x)
   })
 
+  test('a measure leaves room after the bar line before its first note', () => {
+    const s = one(rhythmLayout(Array.from({ length: 8 }, () => note(1)), { beats: 4, unit: 4 }))
+    const firstOfSecond = s.glyphs[4] // first note of measure 2
+    expect(firstOfSecond.x - s.barlines[0]).toBeGreaterThanOrEqual(15) // clears the bar line
+  })
+
   test('3/4: three measures of three quarters', () => {
     const l = rhythmLayout(Array.from({ length: 9 }, () => note(1)), { beats: 3, unit: 4 })
     expect(measureCount(l)).toBe(3)

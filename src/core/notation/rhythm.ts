@@ -108,10 +108,13 @@ const EPS = 1e-6
 // that to avoid a cramped, noisy look — even beamed sixteenths keep a gap.
 const CLEF_PAD = 44 // clef area at the start of every system
 const TIMESIG_PAD = 18 // extra room for the time signature (first system only)
-const TARGET_WIDTH = 500 // wrap to a new system past this (fits ~2 eighth-note bars)
-const ADVANCE: Record<number, number> = { 1: 62, 2: 46, 4: 32, 8: 22, 16: 17 }
+const TARGET_WIDTH = 560 // wrap to a new system past this (fits ~2 eighth-note bars)
+// horizontal advance per note value — heads are ~12px, so these keep a clear gap
+// (sixteenths ~10px, eighths ~14px) rather than the cramped earlier spacing
+const ADVANCE: Record<number, number> = { 1: 68, 2: 50, 4: 36, 8: 26, 16: 22 }
 const DOT_EXTRA = 7
 const BARLINE_GAP = 12
+const MEASURE_LEAD = 12 // padding before a measure's first note, so it clears the bar line
 const TRAIL_PAD = 10
 
 // vertical (staff steps); the renderer converts steps to px
@@ -285,7 +288,7 @@ function layoutMeasure(
 ): MeasureLayout {
   const glyphs: RhythmGlyph[] = []
   const groupKey: number[] = []
-  let x = 0
+  let x = MEASURE_LEAD // leave room after the bar line before the first note
   let pos = 0
   for (const ev of evs) {
     const nv = beatsToValue(ev.beats)

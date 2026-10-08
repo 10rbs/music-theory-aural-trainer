@@ -7,8 +7,8 @@
 import { resolveWarmup, type WarmupExercise } from '../../core/warmups'
 import { type Clef } from '../../core/notation/staff'
 import { tonicName } from '../../core/theory/keys'
-import { playSpec } from '../../shell/audio/synth'
 import { StaffWithControls } from '../practice/StaffWithControls'
+import { togglePlayback, usePlayingId } from './audio-player'
 
 export interface ExerciseCardProps {
   base: WarmupExercise
@@ -45,14 +45,36 @@ export function ExerciseCard({
     octave,
     keyOffset,
   )
+  const isPlaying = usePlayingId() === base.id
 
   return (
     <div className={`practice-item studies-detail${done ? ' done' : ''}`}>
       <div className="practice-info">
-        <h4 className="warmup-title">
-          {index !== undefined && <span className="exercise-num">{index}. </span>}
-          {ex.title}
-        </h4>
+        <div className="exercise-head">
+          <h4 className="warmup-title">
+            {index !== undefined && <span className="exercise-num">{index}. </span>}
+            {ex.title}
+          </h4>
+          <div className="exercise-controls">
+            <button
+              className={`icon-btn play${isPlaying ? ' is-playing' : ''}`}
+              onClick={() => togglePlayback(base.id, ex.playback)}
+              aria-label={isPlaying ? 'Pause' : `Play ${ex.title}`}
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              <span aria-hidden>{isPlaying ? '⏸' : '▶'}</span>
+            </button>
+            <button
+              className={`icon-btn check${done ? ' is-done' : ''}`}
+              onClick={() => onMarkDone(ex)}
+              disabled={done}
+              aria-label={done ? 'Completed' : 'Mark done'}
+              title={done ? 'Done' : 'Mark done'}
+            >
+              <span aria-hidden>{done ? '✓' : '○'}</span>
+            </button>
+          </div>
+        </div>
         {ex.source && (
           <p className="warmup-source">
             {ex.source.composer} · {ex.source.year} · public domain
@@ -82,18 +104,6 @@ export function ExerciseCard({
           }
         />
         {ex.instruction && <p className="warmup-instruction">{ex.instruction}</p>}
-      </div>
-      <div className="practice-actions">
-        <button className="tap-btn" onClick={() => playSpec(ex.playback)}>
-          ▶ Listen
-        </button>
-        <button
-          className={`done-btn${done ? ' is-done' : ''}`}
-          onClick={() => onMarkDone(ex)}
-          disabled={done}
-        >
-          {done ? '✓ Done' : 'Mark done'}
-        </button>
       </div>
     </div>
   )
