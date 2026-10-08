@@ -2,6 +2,8 @@
 // difference + parabolic interpolation). Pure function on a time-domain
 // buffer — the shell's mic adapter supplies the Float32Array.
 
+import { autocorrelate } from '../dsp/fft'
+
 export interface PitchResult {
   freq: number
   /** 0..1 — how periodic the signal is. Reject below ~0.9 for tuner use. */
@@ -28,16 +30,14 @@ export function detectPitch(
   for (let i = 0; i < n; i++) sumSq += buf[i] * buf[i]
   if (Math.sqrt(sumSq / n) < MIN_RMS) return null
 
-  // NSDF: n'(tau) = 2*acf(tau) / (m(0..n-tau) energy terms)
+  // NSDF: n'(tau) = 2*acf(tau) / m(tau), where m(tau) = Σ x[i]² + x[i+tau]².
+  // acf via FFT (O(n log n)); m is updated incrementally from m(0) = 2·Σx².
+  const acf = autocorrelate(buf, maxLag)
   const nsdf = new Float32Array(maxLag)
+  let m = 2 * sumSq
   for (let tau = 0; tau < maxLag; tau++) {
-    let acf = 0
-    let m = 0
-    for (let i = 0; i < n - tau; i++) {
-      acf += buf[i] * buf[i + tau]
-      m += buf[i] * buf[i] + buf[i + tau] * buf[i + tau]
-    }
-    nsdf[tau] = m > 0 ? (2 * acf) / m : 0
+    if (tau > 0) m -= buf[tau - 1] * buf[tau - 1] + buf[n - tau] * buf[n - tau]
+    nsdf[tau] = m > 0 ? (2 * acf[tau]) / m : 0
   }
 
   // key-maxima picking: first find where nsdf dips below zero, then track

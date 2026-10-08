@@ -45,8 +45,9 @@ export function MicGate({
   return (
     <div className="tuner-gate">
       <p className="tagline">
-        The tuner listens through your microphone. Audio is processed entirely on this device —
-        nothing is recorded or sent anywhere.
+        The tuner listens through your microphone. Audio stays on this device: the last minute
+        is held in memory so you can play it back, then discarded — nothing is saved or sent
+        anywhere.
       </p>
       {micState === 'denied' && (
         <p className="tuner-error">
