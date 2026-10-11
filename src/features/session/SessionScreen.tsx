@@ -61,6 +61,7 @@ function LiveView() {
       <SessionTimeline
         pitch={engine.pitchHistory}
         level={engine.levelHistory}
+        brightness={engine.brightnessHistory}
         notes={notes}
         now={engine.now}
         windowMs={WINDOW_MS}
@@ -150,6 +151,7 @@ function ReviewView({ take, onListen }: { take: Take; onListen: () => void }) {
       <SessionTimeline
         pitch={take.pitch}
         level={take.level}
+        brightness={take.brightness}
         notes={take.notes}
         now={view}
         windowMs={WINDOW_MS}

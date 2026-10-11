@@ -43,6 +43,8 @@ src/
                    history.ts (pitch-history graph math)                        (M3/M4.5),
                    level.ts (frame dB + envelope shapes), notes.ts (note-tracker
                    reducer + per-note summaries/ratings)                       (M6.1)
+                   timbre.ts (harmonic powers, tone fingerprint, brightness/
+                   richness/airiness, reference-tone parsing)                  (M6.3)
     dsp/           fft.ts (radix-2 FFT + FFT autocorrelation; MPM uses it)     (M6.2)
     capture/       ring.ts (rolling sample ring buffer, absolute indexing)     (M6.2)
     session/       review.ts (playhead/x mapping, view paging, note at time)  (M6.2)
@@ -113,6 +115,11 @@ def and renders the component matching its `interaction`.
   `getExerciseStats`, `getStreak`, settings kv, `exportAll`/`importAll`.
 - **Schema changes bump the IDB version with an upgrade function.** Attempts are
   never rewritten.
+- **Reference tone** (M6.3): one object-valued setting, `referenceTone`
+  (`{harmonics[12], brightness, richness, airiness, midi, savedOn}`), in the
+  kv store — no schema change, rides along in backups additively. Always read
+  through `parseReferenceTone` (core), so a malformed/hand-edited backup reads
+  as "no reference". Clearing writes `null`.
 - Global display settings (`clef`, `theme`, `practiceScales`) live in the kv
   store like all settings, so they ride along in backups. The theme is
   additionally mirrored to localStorage (`aural-trainer:theme`) purely so

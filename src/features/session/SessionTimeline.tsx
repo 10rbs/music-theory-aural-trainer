@@ -1,5 +1,11 @@
 import { useRef, type PointerEvent } from 'react'
-import { IN_TUNE_CENTS, toSegments, type PitchSample } from '../../core/pitch/history'
+import {
+  IN_TUNE_CENTS,
+  toSegments,
+  toValueSegments,
+  type PitchSample,
+  type ValueSample,
+} from '../../core/pitch/history'
 import { toEnvelopeShapes, type LevelSample } from '../../core/pitch/level'
 import { rateNote, type NoteSummary } from '../../core/pitch/notes'
 import { midiToName } from '../../core/theory/notes'
@@ -8,17 +14,24 @@ const W = 600
 const PITCH_H = 150
 const LABEL_H = 24 // note-name strip between the lanes
 const SHAPE_H = 110
-const H = PITCH_H + LABEL_H + SHAPE_H
+const LANE_GAP = 6
+const TONE_H = 60
+const H = PITCH_H + LABEL_H + SHAPE_H + LANE_GAP + TONE_H
+/** Brightness axis (power-weighted mean harmonic number). */
+const BRIGHT_MIN = 1
+const BRIGHT_MAX = 5
 
 /**
  * Pitch and shape of the sound on one scrolling time axis (right edge = now):
  * top lane is the cents trace (center = in tune), bottom lane is the
  * amplitude envelope mirrored like a recording app's waveform. Finished notes
  * are labelled between the lanes so each blob lines up with its tuning.
+ * A thin tone lane underneath traces brightness (M6.3).
  */
 export function SessionTimeline({
   pitch,
   level,
+  brightness,
   notes,
   now,
   windowMs,
@@ -28,6 +41,7 @@ export function SessionTimeline({
 }: {
   pitch: PitchSample[]
   level: LevelSample[]
+  brightness: ValueSample[]
   notes: NoteSummary[]
   now: number
   windowMs: number
@@ -45,6 +59,7 @@ export function SessionTimeline({
 
   const segments = toSegments(pitch, now, windowMs, W, PITCH_H)
   const shapes = toEnvelopeShapes(level, now, windowMs, W, SHAPE_H)
+  const toneLines = toValueSegments(brightness, now, windowMs, W, TONE_H, BRIGHT_MIN, BRIGHT_MAX)
   const bandHalf = (IN_TUNE_CENTS / 50) * (PITCH_H / 2)
   const xOf = (t: number) => ((t - (now - windowMs)) / windowMs) * W
   const visible = notes.filter((n) => n.endT >= now - windowMs)
@@ -126,6 +141,25 @@ export function SessionTimeline({
             className="shape-fill"
           />
         ))}
+      </g>
+
+      {/* tone lane */}
+      <g transform={`translate(0 ${PITCH_H + LABEL_H + SHAPE_H + LANE_GAP})`}>
+        <rect x={0} y={0} width={W} height={TONE_H} className="lane-bg" />
+        <text x={6} y={14} className="lane-label">
+          tone · brighter ↑
+        </text>
+        {toneLines.map((line, i) =>
+          line.length === 1 ? (
+            <circle key={i} cx={line[0].x} cy={line[0].y} r={2} className="tone-dot" />
+          ) : (
+            <polyline
+              key={i}
+              points={line.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}
+              className="tone-line"
+            />
+          ),
+        )}
       </g>
 
       {playheadT !== null && (

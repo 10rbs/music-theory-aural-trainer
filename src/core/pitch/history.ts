@@ -60,3 +60,34 @@ export function toSegments(
   }
   return segments
 }
+
+export interface ValueSample {
+  t: number // caller-supplied timestamp, ms
+  v: number
+}
+
+/**
+ * Generic scrolling line for a lane: v in [vMin, vMax] maps bottom → top,
+ * clamped; gaps longer than gapMs start a new polyline.
+ */
+export function toValueSegments(
+  samples: ValueSample[],
+  now: number,
+  windowMs: number,
+  w: number,
+  h: number,
+  vMin: number,
+  vMax: number,
+  gapMs = GAP_MS,
+): { x: number; y: number }[][] {
+  const lines: { x: number; y: number }[][] = []
+  let prevT = -Infinity
+  for (const s of samples) {
+    if (s.t < now - windowMs || s.t > now) continue
+    if (s.t - prevT > gapMs || lines.length === 0) lines.push([])
+    prevT = s.t
+    const f = Math.max(0, Math.min(1, (s.v - vMin) / (vMax - vMin)))
+    lines[lines.length - 1].push({ x: ((s.t - (now - windowMs)) / windowMs) * w, y: h * (1 - f) })
+  }
+  return lines
+}

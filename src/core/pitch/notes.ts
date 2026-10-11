@@ -5,11 +5,15 @@
 // The same reducer will run offline over a recorded take (M6.2), so live and
 // playback summaries agree.
 
+import { toneOf, type Tone, type ToneFrame } from './timbre'
+
 export interface Frame {
   t: number // ms, caller-supplied
   db: number // frame level, dBFS (see level.ts)
   midi: number | null // detected note, null when unpitched/silent
   cents: number | null // unrounded offset from `midi`
+  /** Spectrum split for tone colour (pitched frames only). */
+  tone?: ToneFrame
 }
 
 export interface NoteSummary {
@@ -17,9 +21,9 @@ export interface NoteSummary {
   startT: number
   endT: number
   durationMs: number
-  /** Mean tuning over the sustain, cents. */
+  /** Mean tuning over the sustain (10% trimmed each end), cents. */
   avgCents: number
-  /** Std-dev of tuning over the sustain, cents — pitch steadiness. */
+  /** Std-dev of tuning over the sustain (10% trimmed each end), cents — pitch steadiness. */
   centsSpread: number
   /** Onset → reaching the sustain level, ms. */
   attackMs: number
@@ -27,6 +31,8 @@ export interface NoteSummary {
   sustainDb: number
   /** Std-dev of level over the sustain, dB — how even the tone is held. */
   levelSpreadDb: number
+  /** Tone colour averaged over the sustain; null if no frame carried a spectrum. */
+  tone: Tone | null
 }
 
 /** Frames at or below this are silence for segmentation purposes. */
@@ -140,6 +146,16 @@ const stdev = (xs: number[]) => {
   const m = mean(xs)
   return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)))
 }
+/**
+ * Drop the most extreme `frac` of values at each end. Tuning frames near a
+ * slur see both pitches in one analysis window and report in-between cents;
+ * trimming keeps those few frames from reading as pitch wander.
+ */
+const trimmed = (xs: number[], frac = 0.1) => {
+  const s = [...xs].sort((a, b) => a - b)
+  const k = Math.floor(s.length * frac)
+  return k > 0 ? s.slice(k, s.length - k) : s
+}
 const median = (xs: number[]) => {
   const s = [...xs].sort((a, b) => a - b)
   const mid = Math.floor(s.length / 2)
@@ -174,8 +190,11 @@ export function summarizeNote(frames: Frame[], midi: number): NoteSummary | null
   const onPitch = (fs: Frame[]) =>
     fs.filter((f) => f.midi === midi && f.cents !== null).map((f) => f.cents!)
   const sustainCents = onPitch(sustain)
-  const cents = sustainCents.length >= 3 ? sustainCents : onPitch(body)
+  const cents = trimmed(sustainCents.length >= 3 ? sustainCents : onPitch(body))
   if (cents.length === 0) return null
+
+  const tones = (fs: Frame[]) => fs.filter((f) => f.midi === midi && f.tone).map((f) => f.tone!)
+  const sustainTones = tones(sustain)
 
   return {
     midi,
@@ -187,6 +206,7 @@ export function summarizeNote(frames: Frame[], midi: number): NoteSummary | null
     attackMs: body[attackIdx].t - startT,
     sustainDb,
     levelSpreadDb: stdev(sustain.map((f) => f.db)),
+    tone: toneOf(sustainTones.length >= 3 ? sustainTones : tones(body)),
   }
 }
 

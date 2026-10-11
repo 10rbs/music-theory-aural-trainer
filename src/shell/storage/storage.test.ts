@@ -71,6 +71,25 @@ describe('IdbProgressStore', () => {
     expect(await restored.getExerciseStats('interval-id')).toEqual({ correct: 1, total: 2 })
     expect(await restored.getStreak('2026-07-18')).toBe(2)
   })
+
+  test('object-valued settings (M6.3 referenceTone) survive export → wipe → import', async () => {
+    const ref = {
+      harmonics: [0, -4, -9, -12, -15, -18, -22, -25, -28, -31, -35, -40],
+      brightness: 2.2,
+      richness: 0.48,
+      airiness: 0.03,
+      midi: 58,
+      savedOn: '2026-10-11',
+    }
+    const store = new IdbProgressStore()
+    await store.setSetting('referenceTone', ref)
+    const backup = await store.exportAll()
+
+    indexedDB = new IDBFactory()
+    const restored = new IdbProgressStore()
+    await restored.importAll(backup)
+    expect(await restored.getSetting('referenceTone', null)).toEqual(ref)
+  })
 })
 
 describe('migrateV0', () => {
