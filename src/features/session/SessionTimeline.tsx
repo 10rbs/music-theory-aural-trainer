@@ -1,3 +1,4 @@
+import { useRef, type PointerEvent } from 'react'
 import { IN_TUNE_CENTS, toSegments, type PitchSample } from '../../core/pitch/history'
 import { toEnvelopeShapes, type LevelSample } from '../../core/pitch/level'
 import { rateNote, type NoteSummary } from '../../core/pitch/notes'
@@ -22,6 +23,8 @@ export function SessionTimeline({
   now,
   windowMs,
   selectedT,
+  playheadT = null,
+  onSeek,
 }: {
   pitch: PitchSample[]
   level: LevelSample[]
@@ -29,7 +32,17 @@ export function SessionTimeline({
   now: number
   windowMs: number
   selectedT: number | null
+  /** Review mode: draw a playhead at this time. */
+  playheadT?: number | null
+  /** Review mode: pointer down/drag reports the position as a 0..1 fraction of the width. */
+  onSeek?: (fraction: number) => void
 }) {
+  const dragging = useRef(false)
+  const seek = (e: PointerEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    onSeek?.(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)))
+  }
+
   const segments = toSegments(pitch, now, windowMs, W, PITCH_H)
   const shapes = toEnvelopeShapes(level, now, windowMs, W, SHAPE_H)
   const bandHalf = (IN_TUNE_CENTS / 50) * (PITCH_H / 2)
@@ -38,10 +51,21 @@ export function SessionTimeline({
 
   return (
     <svg
-      className="session-timeline"
+      className={`session-timeline${onSeek ? ' seekable' : ''}`}
       viewBox={`0 0 ${W} ${H}`}
       role="img"
       aria-label="Pitch and note shape over time"
+      onPointerDown={
+        onSeek &&
+        ((e) => {
+          dragging.current = true
+          e.currentTarget.setPointerCapture(e.pointerId)
+          seek(e)
+        })
+      }
+      onPointerMove={onSeek && ((e) => dragging.current && seek(e))}
+      onPointerUp={() => (dragging.current = false)}
+      onPointerCancel={() => (dragging.current = false)}
     >
       {/* pitch lane */}
       <rect x={0} y={0} width={W} height={PITCH_H} className="lane-bg" />
@@ -103,6 +127,10 @@ export function SessionTimeline({
           />
         ))}
       </g>
+
+      {playheadT !== null && (
+        <line x1={xOf(playheadT)} y1={0} x2={xOf(playheadT)} y2={H} className="playhead" />
+      )}
     </svg>
   )
 }

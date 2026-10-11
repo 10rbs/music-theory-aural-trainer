@@ -43,6 +43,9 @@ src/
                    history.ts (pitch-history graph math)                        (M3/M4.5),
                    level.ts (frame dB + envelope shapes), notes.ts (note-tracker
                    reducer + per-note summaries/ratings)                       (M6.1)
+    dsp/           fft.ts (radix-2 FFT + FFT autocorrelation; MPM uses it)     (M6.2)
+    capture/       ring.ts (rolling sample ring buffer, absolute indexing)     (M6.2)
+    session/       review.ts (playhead/x mapping, view paging, note at time)  (M6.2)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
     notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6),
                    key-signature.ts (signature accidentals + inline suppression) (M4.7),
@@ -136,8 +139,13 @@ def and renders the component matching its `interaction`.
   `AudioContext.currentTime` timestamps. Never schedule clicks with bare
   `setInterval`. Timing *math* is pure in `core/rhythm/`; the driver is shell.
 - Tuner mic pipeline: explicit user opt-in button → `getUserMedia` (echo
-  cancellation/AGC off) → AnalyserNode → Float32Array frames → pure
-  `detectPitch` in core.
+  cancellation/AGC off) → AudioWorklet tap (inlined Blob-URL module; muted
+  route to destination so every engine pulls it) → contiguous 1024-sample
+  chunks → rolling 60 s ring buffer (memory only) → per-chunk analysis hop
+  (pure `detectPitch`/`frameDb`/note tracker) stamped in **sample time**. The
+  same buffer becomes the review take, so live and playback analysis are one
+  pipeline (M6.2). Playback: `shell/audio/take-player.ts` (AudioBuffer +
+  BufferSource from an offset).
 - Tuner and metronome are header widgets mounted in the root layout
   (`routes/__root.tsx`), so their audio keeps running across route changes
   (M4.5). Since M6.1 the mic session and per-frame analysis (pitch, level,

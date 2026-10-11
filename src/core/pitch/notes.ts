@@ -201,14 +201,13 @@ export interface NoteRatings {
 
 /**
  * Coarse traffic-light ratings. Thresholds are starting guesses for brass
- * long tones — tune them against real playing. Attack is measured on ~93 ms
- * analysis frames (the mic adapter's fftSize), which smears onsets, so even a
- * crisp 40 ms attack reads ~80–90 ms live.
+ * long tones — tune them against real playing. Level (and so attack) is
+ * metered per ~21 ms capture chunk, which bounds attack resolution.
  */
 export const RATING_THRESHOLDS = {
   tuningCents: [5, 15],
   pitchSpreadCents: [4, 10],
-  attackMs: [120, 250],
+  attackMs: [80, 200],
   levelSpreadDb: [1, 2.5],
 } as const
 

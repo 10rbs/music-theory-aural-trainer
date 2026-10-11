@@ -1360,7 +1360,8 @@ circle.pitch-trace.in-tune {
   margin: 4px 0 16px;
 }
 
-.session-timeline .lane-bg {
+.session-timeline .lane-bg,
+.take-overview .lane-bg {
   fill: var(--surface);
   stroke: var(--border);
   stroke-width: 1;
@@ -1541,4 +1542,76 @@ circle.pitch-trace.in-tune {
 .session-a4 {
   color: var(--text-dim);
   font-size: 0.85rem;
+}
+
+/* Review mode: playhead, overview strip, transport (M6.2) */
+
+.session-timeline.seekable,
+.take-overview {
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.playhead {
+  stroke: var(--bad);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.take-overview {
+  display: block;
+  width: 100%;
+  height: 36px;
+  margin: -8px 0 12px;
+}
+
+.take-overview .shape-fill {
+  stroke: none;
+}
+
+.overview-view {
+  fill: var(--accent);
+  fill-opacity: 0.12;
+  stroke: var(--accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 16px;
+}
+
+.transport-play {
+  min-width: 7.5rem;
+}
+
+.transport-clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.transport-hint {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.session-btn {
+  background: var(--accent);
+  border: none;
+  color: #0c0e14;
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.session-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
