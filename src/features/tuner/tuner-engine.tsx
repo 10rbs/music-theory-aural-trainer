@@ -16,6 +16,7 @@ import { pushReading, type PitchSample, type ValueSample } from '../../core/pitc
 import { frameDb, pushLevel, type LevelSample } from '../../core/pitch/level'
 import { toneFrame, toneOf } from '../../core/pitch/timbre'
 import {
+  currentNote as currentNoteOf,
   flushTracker,
   initialTracker,
   trackNote,
@@ -58,6 +59,8 @@ export interface TunerEngine {
   now: number
   /** Completed notes, most recent first. */
   notes: NoteSummary[]
+  /** The note being played right now, if any. */
+  currentNote: { midi: number; startT: number } | null
   /** The last stopped session, for review/playback. Cleared on start. */
   take: Take | null
   start: () => Promise<void>
@@ -84,6 +87,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
   const [brightnessHistory, setBrightnessHistory] = useState<ValueSample[]>([])
   const [now, setNow] = useState(0)
   const [notes, setNotes] = useState<NoteSummary[]>([])
+  const [currentNote, setCurrentNote] = useState<TunerEngine['currentNote']>(null)
   const [take, setTake] = useState<Take | null>(null)
 
   const sessionRef = useRef<MicSession | null>(null)
@@ -141,6 +145,8 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
     })
     trackerRef.current = step.state
     addNote(step.finished)
+    const cur = currentNoteOf(step.state)
+    setCurrentNote((prev) => (prev?.midi === cur?.midi && prev?.startT === cur?.startT ? prev : cur))
 
     if (!note) {
       if (++silentFrames.current > HOLD_FRAMES) {
@@ -174,6 +180,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
     brightRef.current = []
     notesRef.current = []
     setNotes([])
+    setCurrentNote(null)
     setPitchHistory([])
     setLevelHistory([])
     setBrightnessHistory([])
@@ -194,6 +201,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
     sessionRef.current = null
     addNote(flushTracker(trackerRef.current))
     trackerRef.current = initialTracker
+    setCurrentNote(null)
 
     const ring = ringRef.current
     ringRef.current = null // free the capture; the take owns its copy
@@ -233,6 +241,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
         brightnessHistory,
         now,
         notes,
+        currentNote,
         take,
         start,
         stop,

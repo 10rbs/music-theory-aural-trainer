@@ -135,6 +135,12 @@ export function trackNote(state: TrackerState, f: Frame): TrackerStep {
   return { state: { ...state, note, pending: [], lastSoundingT }, finished: null }
 }
 
+/** The note in progress, if any — for live "how long have I held this" displays. */
+export function currentNote(state: TrackerState): { midi: number; startT: number } | null {
+  if (state.note === null || state.noteMidi === null || state.note.length === 0) return null
+  return { midi: state.noteMidi, startT: state.note[0].t }
+}
+
 /** End any note in progress (e.g. the mic was stopped). */
 export function flushTracker(state: TrackerState): NoteSummary | null {
   if (state.note === null || state.noteMidi === null) return null

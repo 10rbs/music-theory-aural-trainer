@@ -8,6 +8,15 @@ export function midiToName(midi: number): string {
   return `${name}${octave}`
 }
 
+const FLAT_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'] as const
+
+/** Brass-friendly spelling for tuner displays (flats, ♭ glyph), e.g. 46 → "B♭2". */
+export function midiToFlatName(midi: number): string {
+  const name = FLAT_NAMES[((midi % 12) + 12) % 12]
+  const octave = Math.floor(midi / 12) - 1
+  return `${name}${octave}`
+}
+
 export function midiToFreq(midi: number, a4 = 440): number {
   return a4 * Math.pow(2, (midi - 69) / 12)
 }

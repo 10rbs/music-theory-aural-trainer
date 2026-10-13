@@ -1,5 +1,5 @@
 import { rateNote, type NoteSummary, type Rating } from '../../core/pitch/notes'
-import { midiToName } from '../../core/theory/notes'
+import { midiToFlatName } from '../../core/theory/notes'
 import { useReferenceTone } from './reference-tone'
 import { ToneFingerprint } from './ToneFingerprint'
 
@@ -52,7 +52,7 @@ export function NoteReport({
   return (
     <div className="note-report">
       <div className="note-report-head">
-        <h2>{midiToName(selected.midi)}</h2>
+        <h2>{midiToFlatName(selected.midi)}</h2>
         <span className="note-report-meta">
           {(selected.durationMs / 1000).toFixed(1)} s · {Math.round(selected.sustainDb)} dB
         </span>
@@ -102,7 +102,7 @@ export function NoteReport({
                 className={`note-chip rating-${rateNote(n).tuning}${n === selected ? ' selected' : ''}`}
                 onClick={() => onSelect(n.startT)}
               >
-                {midiToName(n.midi)} {signed(c)}¢
+                {midiToFlatName(n.midi)} {signed(c)}¢
               </button>
             )
           })}

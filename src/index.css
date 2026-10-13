@@ -1721,3 +1721,171 @@ circle.pitch-trace.in-tune {
   padding: 6px 12px;
   font-size: 0.85rem;
 }
+
+/* Guided long tones (M7) */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lt-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.lt-step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.lt-step.current {
+  border-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lt-step.skipped {
+  text-decoration: line-through;
+}
+
+.lt-step[class*='rating-'] {
+  color: var(--text);
+}
+
+.lt-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.lt-target-label {
+  color: var(--text-dim);
+}
+
+.lt-target-note {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.lt-target-meta {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.lt-hold {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 4px;
+}
+
+.lt-hold-track {
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.lt-hold-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--accent);
+}
+
+.lt-hold-track.full .lt-hold-fill {
+  background: var(--good);
+}
+
+.lt-hold-text {
+  min-width: 11rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.lt-hint {
+  min-height: 1.4em;
+  color: var(--text-dim);
+  margin: 4px 0 12px;
+}
+
+.lt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.lt-actions .tap-btn {
+  padding: 8px 14px;
+}
+
+.lt-summary-actions {
+  margin-top: 14px;
+}
+
+.lt-table-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.lt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lt-table th,
+.lt-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.lt-table thead th {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.lt-table td[class*='rating-'] .rating-dot {
+  display: inline-block;
+}
+
+.lt-table .lt-cell-value {
+  color: var(--text);
+}
+
+.lt-skipped td {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .lt-hold {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .lt-hold-track {
+    flex: none;
+  }
+}

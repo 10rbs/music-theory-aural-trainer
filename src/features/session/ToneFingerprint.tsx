@@ -1,5 +1,5 @@
 import { HARMONIC_FLOOR_DB, type ReferenceTone, type Tone } from '../../core/pitch/timbre'
-import { midiToName } from '../../core/theory/notes'
+import { midiToFlatName } from '../../core/theory/notes'
 
 const W = 360
 const H = 130
@@ -56,7 +56,7 @@ export function ToneFingerprint({
           <span className="legend-swatch bar" /> This note
           {reference && (
             <>
-              <span className="legend-swatch tick" /> Reference ({midiToName(reference.midi)}, {reference.savedOn})
+              <span className="legend-swatch tick" /> Reference ({midiToFlatName(reference.midi)}, {reference.savedOn})
             </>
           )}
         </div>
@@ -123,7 +123,7 @@ export function ToneFingerprint({
 
       <div className="tone-actions">
         <button className="tap-btn" onClick={onSave}>
-          ★ Save {midiToName(midi)} as reference tone
+          ★ Save {midiToFlatName(midi)} as reference tone
         </button>
         {reference && (
           <button className="tap-btn" onClick={onClear}>

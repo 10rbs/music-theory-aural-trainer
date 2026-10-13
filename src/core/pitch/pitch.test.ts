@@ -77,6 +77,10 @@ describe('freqToNote', () => {
     expect(freqToNote(440)).toEqual({ midi: 69, name: 'A4', cents: 0, exactCents: 0 })
   })
 
+  test('names black keys with flats (brass tuner)', () => {
+    expect(freqToNote(233.08)?.name).toBe('B♭3')
+  })
+
   test('detuned: 445 Hz → A4 about +20 cents', () => {
     const r = freqToNote(445)!
     expect(r.name).toBe('A4')
