@@ -1,5 +1,7 @@
 import { rateNote, type NoteSummary, type Rating } from '../../core/pitch/notes'
 import { midiToName } from '../../core/theory/notes'
+import { useReferenceTone } from './reference-tone'
+import { ToneFingerprint } from './ToneFingerprint'
 
 const MAX_CHIPS = 8
 
@@ -36,6 +38,7 @@ export function NoteReport({
   selected: NoteSummary | null
   onSelect: (startT: number) => void
 }) {
+  const { reference, save, clear } = useReferenceTone()
   if (!selected) {
     return (
       <div className="note-report empty">
@@ -80,6 +83,15 @@ export function NoteReport({
           rating={r.evenness}
         />
       </div>
+      {selected.tone && (
+        <ToneFingerprint
+          tone={selected.tone}
+          midi={selected.midi}
+          reference={reference}
+          onSave={() => save(selected.tone!, selected.midi)}
+          onClear={clear}
+        />
+      )}
       {notes.length > 1 && (
         <div className="note-chips" role="group" aria-label="Recent notes">
           {notes.slice(0, MAX_CHIPS).map((n) => {

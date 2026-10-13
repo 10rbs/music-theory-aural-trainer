@@ -1615,3 +1615,109 @@ circle.pitch-trace.in-tune {
   opacity: 0.5;
   cursor: default;
 }
+
+/* Tone colour (M6.3) */
+
+.tone-line {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 2;
+}
+
+.tone-dot {
+  fill: var(--warn);
+}
+
+.tone-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.tone-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.tone-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.tone-legend {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+}
+
+.legend-swatch.bar {
+  height: 10px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.legend-swatch.tick {
+  height: 2px;
+  margin-left: 8px;
+  background: var(--text);
+}
+
+.tone-fingerprint {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  margin: 8px 0 12px;
+}
+
+.fp-bar {
+  fill: var(--accent);
+  fill-opacity: 0.8;
+}
+
+.fp-bar:hover {
+  fill-opacity: 1;
+}
+
+.fp-ref {
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.fp-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.fp-axis {
+  fill: var(--text-dim);
+  font-size: 10px;
+}
+
+.tone-metrics .metric-note {
+  color: var(--text-dim);
+}
+
+.tone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tone-actions .tap-btn {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}

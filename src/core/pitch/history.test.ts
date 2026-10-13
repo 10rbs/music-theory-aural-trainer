@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { GAP_MS, pushReading, toSegments, type PitchSample } from './history'
+import { GAP_MS, pushReading, toSegments, toValueSegments, type PitchSample } from './history'
 
 const WINDOW = 8000
 const W = 100
@@ -97,5 +97,43 @@ describe('toSegments', () => {
       H,
     )
     expect(segs.flatMap((s) => s.points)).toHaveLength(1)
+  })
+})
+
+describe('toValueSegments', () => {
+  test('maps the value range bottom→top and clamps', () => {
+    const [line] = toValueSegments(
+      [
+        { t: 0, v: 1 },
+        { t: 50, v: 3 },
+        { t: 100, v: 9 },
+      ],
+      100,
+      100,
+      100,
+      40,
+      1,
+      5,
+    )
+    expect(line.map((p) => p.y)).toEqual([40, 20, 0])
+    expect(line.map((p) => p.x)).toEqual([0, 50, 100])
+  })
+
+  test('splits at gaps and skips samples outside the window', () => {
+    const lines = toValueSegments(
+      [
+        { t: 0, v: 2 },
+        { t: 1000, v: 2 },
+        { t: 1020, v: 2 },
+      ],
+      1020,
+      2000,
+      100,
+      40,
+      1,
+      5,
+    )
+    expect(lines.map((l) => l.length)).toEqual([1, 2])
+    expect(toValueSegments([{ t: 0, v: 2 }], 5000, 1000, 100, 40, 1, 5)).toEqual([])
   })
 })

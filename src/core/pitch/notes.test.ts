@@ -129,6 +129,13 @@ describe('summarizeNote', () => {
     expect(wobbly.levelSpreadDb).toBeGreaterThan(1)
   })
 
+  test('a few in-between frames at a slur do not read as wander', () => {
+    const frames = run(0, 1000, (t) => ({ cents: t > 940 ? 40 : 2 })) // last ~4 frames drift
+    const n = summarizeNote(frames, 69)!
+    expect(n.avgCents).toBeCloseTo(2)
+    expect(n.centsSpread).toBeLessThan(1)
+  })
+
   test('pitch wander shows up as cents spread', () => {
     const n = summarizeNote(run(0, 1000, (t) => ({ cents: 10 * Math.sin(t / 80) })), 69)!
     expect(n.centsSpread).toBeGreaterThan(5)
@@ -138,6 +145,21 @@ describe('summarizeNote', () => {
     const n = summarizeNote([...silence(0, 200), ...run(200, 700, {}), ...silence(700, 900)], 69)!
     expect(n.startT).toBe(200)
     expect(n.durationMs).toBeLessThan(500)
+  })
+
+  test('averages tone colour over the sustain, ignoring the attack', () => {
+    const bright = { powers: [1, 1, 1, ...Array(9).fill(0)], noise: 0 }
+    const pure = { powers: [1, ...Array(11).fill(0)], noise: 0 }
+    const frames = [
+      ...run(0, 100, { db: -40, tone: bright }), // splatty attack
+      ...run(100, 1000, { db: -20, tone: pure }),
+    ]
+    const n = summarizeNote(frames, 69)!
+    expect(n.tone!.brightness).toBeCloseTo(1)
+  })
+
+  test('tone is null when frames carry no spectrum', () => {
+    expect(summarizeNote(run(0, 1000, {}), 69)!.tone).toBeNull()
   })
 
   test('returns null with no on-pitch frames', () => {
@@ -156,6 +178,7 @@ describe('rateNote', () => {
     attackMs: 50,
     sustainDb: -20,
     levelSpreadDb: 0.5,
+    tone: null,
   }
 
   test('a clean note rates good across the board', () => {

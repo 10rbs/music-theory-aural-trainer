@@ -12,8 +12,9 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { createRing, readRing, ringStart, writeRing, type Ring } from '../../core/capture/ring'
 import { detectPitch } from '../../core/pitch/detect'
 import { freqToNote } from '../../core/pitch/cents'
-import { pushReading, type PitchSample } from '../../core/pitch/history'
+import { pushReading, type PitchSample, type ValueSample } from '../../core/pitch/history'
 import { frameDb, pushLevel, type LevelSample } from '../../core/pitch/level'
+import { toneFrame, toneOf } from '../../core/pitch/timbre'
 import {
   flushTracker,
   initialTracker,
@@ -40,6 +41,7 @@ export interface Take {
   endMs: number
   pitch: PitchSample[]
   level: LevelSample[]
+  brightness: ValueSample[]
   notes: NoteSummary[]
 }
 
@@ -50,6 +52,8 @@ export interface TunerEngine {
   reading: Reading | null
   pitchHistory: PitchSample[]
   levelHistory: LevelSample[]
+  /** Per-frame tone brightness (pitched frames only). */
+  brightnessHistory: ValueSample[]
   /** Timestamp of the latest frame — the live timeline's right edge. */
   now: number
   /** Completed notes, most recent first. */
@@ -77,6 +81,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
   const [reading, setReading] = useState<Reading | null>(null)
   const [pitchHistory, setPitchHistory] = useState<PitchSample[]>([])
   const [levelHistory, setLevelHistory] = useState<LevelSample[]>([])
+  const [brightnessHistory, setBrightnessHistory] = useState<ValueSample[]>([])
   const [now, setNow] = useState(0)
   const [notes, setNotes] = useState<NoteSummary[]>([])
   const [take, setTake] = useState<Take | null>(null)
@@ -90,6 +95,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
   const silentFrames = useRef(0)
   const pitchRef = useRef<PitchSample[]>([])
   const levelRef = useRef<LevelSample[]>([])
+  const brightRef = useRef<ValueSample[]>([])
   const notesRef = useRef<NoteSummary[]>([])
   const trackerRef = useRef<TrackerState>(initialTracker)
 
@@ -118,6 +124,12 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
     const db = frameDb(win.subarray(FRAME / 2 - CHUNK / 2, FRAME / 2 + CHUNK / 2))
     const pitch = detectPitch(win, sampleRate)
     const note = pitch ? freqToNote(pitch.freq, a4Ref.current) : null
+    const tone = pitch && note ? toneFrame(win, sampleRate, pitch.freq) : undefined
+    const brightness = tone ? toneOf([tone])?.brightness : undefined
+    if (brightness !== undefined) {
+      brightRef.current = [...brightRef.current.filter((b) => b.t >= t - CAPTURE_MS), { t, v: brightness }]
+      setBrightnessHistory(brightRef.current)
+    }
 
     levelRef.current = pushLevel(levelRef.current, { t, db }, t, CAPTURE_MS)
     const step = trackNote(trackerRef.current, {
@@ -125,6 +137,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
       db,
       midi: note?.midi ?? null,
       cents: note?.exactCents ?? null,
+      tone,
     })
     trackerRef.current = step.state
     addNote(step.finished)
@@ -158,10 +171,12 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
     smoothed.current = null
     pitchRef.current = []
     levelRef.current = []
+    brightRef.current = []
     notesRef.current = []
     setNotes([])
     setPitchHistory([])
     setLevelHistory([])
+    setBrightnessHistory([])
     setNow(0)
     try {
       const session = await startMic(onChunk)
@@ -192,6 +207,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
         endMs: (ring.written / sr) * 1000,
         pitch: keep(pitchRef.current),
         level: keep(levelRef.current),
+        brightness: keep(brightRef.current),
         notes: notesRef.current.filter((n) => n.startT >= startMs),
       })
     }
@@ -214,6 +230,7 @@ export function TunerEngineProvider({ children }: { children: ReactNode }) {
         reading,
         pitchHistory,
         levelHistory,
+        brightnessHistory,
         now,
         notes,
         take,
