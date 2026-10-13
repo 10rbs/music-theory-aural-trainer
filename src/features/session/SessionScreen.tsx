@@ -8,7 +8,7 @@ import {
   pitchAt,
   xToTime,
 } from '../../core/session/review'
-import { midiToName } from '../../core/theory/notes'
+import { midiToFlatName } from '../../core/theory/notes'
 import { playTake, type TakePlayback } from '../../shell/audio/take-player'
 import { MicGate, TunerReadout } from '../tuner/TunerReadout'
 import { useTunerEngine, type Take } from '../tuner/tuner-engine'
@@ -136,7 +136,7 @@ function ReviewView({ take, onListen }: { take: Take; onListen: () => void }) {
   const under = noteAt(take.notes, playhead)
   const p = under ? pitchAt(take.pitch, playhead) : null
   const reading = under
-    ? { midi: under.midi, name: midiToName(under.midi), cents: p?.cents ?? Math.round(under.avgCents) }
+    ? { midi: under.midi, name: midiToFlatName(under.midi), cents: p?.cents ?? Math.round(under.avgCents) }
     : null
   // the note under the playhead, else one about to start (parked in its
   // pre-roll), else the most recent one before it

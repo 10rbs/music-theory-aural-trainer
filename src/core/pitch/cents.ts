@@ -1,7 +1,7 @@
 // Frequency → nearest equal-tempered note + cents offset, relative to a
 // configurable A4 reference (bands often tune to 441/442).
 
-import { midiToName } from '../theory/notes'
+import { midiToFlatName } from '../theory/notes'
 
 export interface NoteReading {
   midi: number
@@ -18,7 +18,7 @@ export function freqToNote(freq: number, a4 = 440): NoteReading | null {
   if (midi < 0 || midi > 127) return null
   return {
     midi,
-    name: midiToName(midi),
+    name: midiToFlatName(midi),
     cents: Math.round((midiFloat - midi) * 100),
     exactCents: (midiFloat - midi) * 100,
   }

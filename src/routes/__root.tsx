@@ -24,6 +24,7 @@ function RootLayout() {
             <Link to="/" activeOptions={{ exact: true }}>
               Tuner
             </Link>
+            <Link to="/long-tones">Long tones</Link>
             <Link to="/exercises">Exercises</Link>
             <Link to="/practice">Scales</Link>
             <Link to="/warmup">Warm-up</Link>

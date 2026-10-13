@@ -1,10 +1,18 @@
 // Ported from the v0-vanilla browser test runner (tests/theory.test.js).
 
 import { describe, expect, test } from 'vitest'
-import { midiToName, midiToFreq, pitchClassMidi, CHROMATIC_PCS, FIFTHS_PCS, NOTE_NAMES } from './notes'
+import { midiToName, midiToFlatName, midiToFreq, pitchClassMidi, CHROMATIC_PCS, FIFTHS_PCS, NOTE_NAMES } from './notes'
 import { INTERVALS } from './intervals'
 import { CHORDS } from './chords'
 import { SCALES } from './scales'
+
+describe('midiToFlatName', () => {
+  test('spells black keys as flats for brass displays', () => {
+    expect(midiToFlatName(46)).toBe('B♭2')
+    expect(midiToFlatName(63)).toBe('E♭4')
+    expect(midiToFlatName(60)).toBe('C4')
+  })
+})
 
 describe('midiToName', () => {
   test('maps middle C (60) to C4', () => {

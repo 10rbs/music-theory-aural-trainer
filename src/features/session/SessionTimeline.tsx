@@ -8,7 +8,7 @@ import {
 } from '../../core/pitch/history'
 import { toEnvelopeShapes, type LevelSample } from '../../core/pitch/level'
 import { rateNote, type NoteSummary } from '../../core/pitch/notes'
-import { midiToName } from '../../core/theory/notes'
+import { midiToFlatName } from '../../core/theory/notes'
 
 const W = 600
 const PITCH_H = 150
@@ -120,7 +120,7 @@ export function SessionTimeline({
           <g key={n.startT} className={`note-mark rating-${r}${n.startT === selectedT ? ' selected' : ''}`}>
             <rect x={x} y={PITCH_H + 4} width={width} height={LABEL_H - 8} rx={3} />
             <text x={x + 4} y={PITCH_H + LABEL_H / 2 + 4}>
-              {midiToName(n.midi)} {cents > 0 ? '+' : ''}
+              {midiToFlatName(n.midi)} {cents > 0 ? '+' : ''}
               {cents}¢
             </text>
           </g>

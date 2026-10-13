@@ -47,7 +47,9 @@ src/
                    richness/airiness, reference-tone parsing)                  (M6.3)
     dsp/           fft.ts (radix-2 FFT + FFT autocorrelation; MPM uses it)     (M6.2)
     capture/       ring.ts (rolling sample ring buffer, absolute indexing)     (M6.2)
-    session/       review.ts (playhead/x mapping, view paging, note at time)  (M6.2)
+    session/       review.ts (playhead/x mapping, view paging, note at time)  (M6.2),
+                   longtones.ts (guided routine reducer over finished notes,
+                   hold progress, summary/score/attempt detail)                (M7)
     rhythm/        beat/subdivision timing as pure functions of (bpm, sig, t)  (M2)
     notation/      staff layout math (clefs, diatonic steps, ledger lines)     (M4.6),
                    key-signature.ts (signature accidentals + inline suppression) (M4.7),
@@ -63,12 +65,13 @@ src/
     audio/         context (lazy AudioContext, resume-on-gesture), synth,
                    scheduler (lookahead driver), mic (M3), drone (M4.5)
     storage/       ProgressStore interface, idb-store, migrate-v0
-  features/        session/ (home practice screen: timeline + note report, M6.1),
+  features/        session/ (home practice screen: timeline + note report, M6.1;
+                   LongTonesView, M7),
                    drills/, tuner/ (incl. tuner-engine — shared mic/analysis
                    context), metronome/, practice/ (ScaleStaff +
                    RhythmStaff + shared staff-glyphs + StaffWithControls, shared
                    with warmup/), warmup/, settings/, stats/
-  routes/          __root, index (practice session), exercises (old dashboard),
+  routes/          __root, index (practice session), long-tones, exercises (old dashboard),
                    drill.$exerciseId, practice, warmup, studies, workouts
   components/      shared primitives (DropWidget — header pill + drop-down panel)
 ```
@@ -120,6 +123,13 @@ def and renders the component matching its `interaction`.
   kv store — no schema change, rides along in backups additively. Always read
   through `parseReferenceTone` (core), so a malformed/hand-edited backup reads
   as "no reference". Clearing writes `null`.
+- **Long tones** (M7): a finished routine appends one attempt with
+  `exerciseId` `long-tones` (score = share of 'good' ratings, `correct` =
+  nothing skipped) — new id, no schema change, feeds the streak. Its `detail`
+  (`routineDetail`) keeps compact per-step numbers (`{midi, durationMs,
+  avgCents, centsSpread, attackMs, levelSpreadDb, brightness}` or `null` for a
+  skipped step) so a future practice log can chart trends from attempts alone.
+  Routines where nothing was held aren't logged.
 - Global display settings (`clef`, `theme`, `practiceScales`) live in the kv
   store like all settings, so they ride along in backups. The theme is
   additionally mirrored to localStorage (`aural-trainer:theme`) purely so

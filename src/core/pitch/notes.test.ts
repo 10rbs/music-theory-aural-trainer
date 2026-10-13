@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  currentNote,
   flushTracker,
   initialTracker,
   rateNote,
@@ -89,6 +90,15 @@ describe('trackNote segmentation', () => {
 
   test('flushTracker closes a note still in progress', () => {
     expect(feed(run(0, 600, {}))).toHaveLength(1)
+  })
+
+  test('currentNote reports the note in progress from its first frame', () => {
+    let state = initialTracker
+    expect(currentNote(state)).toBeNull()
+    for (const f of [...silence(0, 100), ...run(100, 600, { midi: 58 })]) state = trackNote(state, f).state
+    expect(currentNote(state)).toEqual({ midi: 58, startT: 100 })
+    for (const f of silence(600, 800)) state = trackNote(state, f).state
+    expect(currentNote(state)).toBeNull()
   })
 
   test('loud unpitched lead-in counts toward the attack', () => {
